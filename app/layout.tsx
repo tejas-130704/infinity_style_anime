@@ -61,7 +61,7 @@ export default function RootLayout({
       lang="en"
       className={`${cinzel.variable} ${notoJp.variable} ${dmSans.variable} ${bungee.variable}`}
     >
-      <body className="font-sans antialiased min-h-screen bg-mugen-atmosphere text-mugen-white">
+      <body className="font-sans antialiased min-h-screen bg-mugen-atmosphere text-mugen-white" suppressHydrationWarning>
         <AosProvider>
           <Suspense fallback={<div className="h-16 shrink-0" aria-hidden />}>
             <Navbar />

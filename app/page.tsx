@@ -5,10 +5,9 @@ import { LoadingAnimation } from '@/components/LoadingAnimation'
 import { HeroSection } from '@/components/HeroSection'
 import { ValueProposition } from '@/components/ValueProposition'
 import { PosterShowcase } from '@/components/PosterShowcase'
-import { ThreeDModelViewer } from '@/components/ThreeDModelViewer'
-import { CustomOrderForm } from '@/components/CustomOrderForm'
-import { MarqueeSection } from '@/components/MarqueeSection'
-import { Footer } from '@/components/Footer'
+// import { ThreeDModelViewer } from '@/components/ThreeDModelViewer'  // "Meet the Characters" — commented out
+// import { CustomOrderForm } from '@/components/CustomOrderForm'       // "Design Your Legend"  — removed
+import { FeaturedCollections } from '@/components/FeaturedCollections'
 
 export default function Home() {
   const [loadingAnimationShown, setLoadingAnimationShown] = useState(false)
@@ -39,9 +38,8 @@ export default function Home() {
       <HeroSection />
       <ValueProposition />
       <PosterShowcase />
-      <ThreeDModelViewer />
-      <CustomOrderForm />
-      <MarqueeSection />
+      {/* <ThreeDModelViewer /> */}  {/* Meet the Characters — commented out */}
+      <FeaturedCollections />
     </main>
   )
 }

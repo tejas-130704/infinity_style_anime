@@ -10,9 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
   { label: 'Shop', href: '/shop' },
-  { label: 'Posters', href: '/shop?category=posters' },
-  { label: '3D Models', href: '/shop?category=3d_models' },
-  { label: 'Custom', href: '/shop?category=custom_designs' },
+  { label: 'About', href: '/about' },
 ] as const
 
 function navLinkActive(pathname: string, categoryFromUrl: string | undefined, href: string) {
@@ -177,14 +175,7 @@ export function Navbar() {
               </Link>
             )}
 
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="hidden text-xs font-bold uppercase tracking-wide text-mugen-gold hover:text-white md:inline"
-              >
-                Admin
-              </Link>
-            )}
+
 
             <div className="hidden sm:block">
               <Link href="/shop">
@@ -238,15 +229,7 @@ export function Navbar() {
                   Sign in
                 </Link>
               )}
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="font-semibold text-mugen-gold"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Admin
-                </Link>
-              )}
+
               <div className="border-t border-mugen-gray/60 pt-3">
                 <Link href="/shop" className="block w-full" onClick={() => setMobileMenuOpen(false)}>
                   <GlowButton className="w-full">Shop now</GlowButton>

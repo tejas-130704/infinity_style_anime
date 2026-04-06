@@ -1,0 +1,59 @@
+1. write "Action Figures" instead of "3D models"
+2. at shop page add 2 more section called:
+a. Custom Action figure
+b. Personalized Posters
+And instead of "Custom Designs" write "Limited Edition".
+
+
+And understand the hings so you can easily understand the product difference.
+
+1. Posters: anime posters
+2. Action figure : Anime action figures.
+3. Limited Edition: here the posters are premium, desgin with unique concept ,example "the secene never happen in animes but everyone want that.".
+4. Custom Action Figure: here user will give the model file ".stl" and other things. we will calculate the price in backend and showcase then user make there order we will develop that product and deliver them.
+5. Personalized Posters: Similar to above point, but here desgin and size of the poster ("user has to choose from the given one.)
+
+
+NOTE:
+for now just devlop UI accordingly, we have to work on 4 and 5 point deeply.
+
+
+
+6. change the vertical scroll bar to cool scroll bar and reduce its width 5 px.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+we want to add this functionality to the "Custom Action figure".
+after uploading the (.stl) file : we have 2 type of customer, 1. who know about the above functionality , 2. who do not know:
+
+so we will desgin that functionality and deafulat the standard behavious.
+Note : "The below default values are according t the standard desgin. so don't worry about it."
+
+and there wll be an option "do you want custom changes".
+
+if user toggle the button to custom changes then user can edit it from the given choices,and accoding to it the price will get caluclate according to per gram, material type and all.
+
+i will explain the price calculation formula, after this . first desgin that functionality like screen shot mentioned above.
+
+
+
+

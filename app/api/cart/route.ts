@@ -16,10 +16,12 @@ export async function GET() {
       `
       id,
       quantity,
+      selected_variant,
       products (
         id,
         name,
         price,
+        original_price,
         image_url,
         category,
         slug
@@ -47,15 +49,22 @@ export async function POST(request: Request) {
   const body = await request.json()
   const productId = body.product_id as string
   const qty = Math.max(1, parseInt(String(body.quantity ?? 1), 10) || 1)
+  // selected_variant: { color?: string; size?: string }
+  const selectedVariant: Record<string, string> = {}
+  if (body.selected_variant?.color) selectedVariant.color = String(body.selected_variant.color)
+  if (body.selected_variant?.size)  selectedVariant.size  = String(body.selected_variant.size)
+
   if (!productId) {
     return NextResponse.json({ error: 'product_id required' }, { status: 400 })
   }
 
+  // Look for existing row matching same product + same variant
   const { data: existing } = await supabase
     .from('cart_items')
     .select('id, quantity')
     .eq('user_id', user.id)
     .eq('product_id', productId)
+    .eq('selected_variant', JSON.stringify(selectedVariant))
     .maybeSingle()
 
   if (existing) {
@@ -71,6 +80,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       product_id: productId,
       quantity: qty,
+      selected_variant: selectedVariant,
     })
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

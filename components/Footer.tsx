@@ -10,11 +10,12 @@ import {
 } from 'lucide-react'
 
 const QUICK_LINKS = [
-  { label: 'Shop', href: '/shop' },
-  { label: 'Posters', href: '/shop?category=posters' },
-  { label: '3D Models', href: '/shop?category=3d_models' },
-  { label: 'Custom designs', href: '/shop?category=custom_designs' },
-  { label: 'Account', href: '/account' },
+  { label: 'Shop',                  href: '/shop' },
+  { label: 'Posters',               href: '/shop?category=posters' },
+  { label: 'Action Figures',        href: '/shop?category=action_figures' },
+  { label: 'Limited Edition',       href: '/shop?category=limited_edition' },
+  { label: 'Custom Action Figure',  href: '/shop?category=custom_action_figure' },
+  { label: 'Account',               href: '/account' },
 ] as const
 
 export function Footer() {
@@ -22,14 +23,14 @@ export function Footer() {
 
   return (
     <footer
-  className="relative bg-mugen-black border-t border-[rgba(255,255,255,0.3)] mx-30 mt-40"
+  className="relative bg-mugen-black border-t border-[rgba(255,255,255,0.3)]"
   data-aos="fade-up"
   data-aos-duration="850"
 >
       {/* Top Glow */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-mugen-crimson to-transparent" />
 
-      <div className="container mx-auto px-4 md:px-8 py-16 md:py-20">
+      <div className="container mx-auto px-4 md:px-8 py-8 md:py-12">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Company Info */}
@@ -104,13 +105,19 @@ export function Footer() {
               Support
             </h3>
             <ul className="space-y-3">
-              {['About Us', 'Contact', 'FAQ', 'Shipping Info', 'Returns'].map((link) => (
-                <li key={link}>
+              {[
+                { label: 'About Us', href: '/about' },
+                { label: 'Contact',  href: '/about#contact-heading' },
+                { label: 'FAQ',      href: '/about#faq-heading' },
+                { label: 'Shipping Info', href: '#' },
+                { label: 'Returns',  href: '#' },
+              ].map((link) => (
+                <li key={link.label}>
                   <a
-                    href="#"
+                    href={link.href}
                     className="font-sans text-sm font-medium text-white hover:text-mugen-glow transition-colors duration-200"
                   >
-                    {link}
+                    {link.label}
                   </a>
                 </li>
               ))}

@@ -17,7 +17,7 @@ export function SectionTitle({
     <div className={centered ? 'text-center' : ''}>
       <h2
         className={`
-        font-cinzel text-4xl md:text-5xl lg:text-6xl font-extrabold
+        font-cinzel text-3xl md:text-4xl lg:text-5xl font-extrabold
         heading-stroke mb-2
         text-balance
         ${className}

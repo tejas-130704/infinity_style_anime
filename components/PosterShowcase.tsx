@@ -122,7 +122,7 @@ export function PosterShowcase() {
   }, [posters.length])
 
   return (
-    <section className="relative py-20 md:py-32 lg:py-40 bg-gradient-to-b from-mugen-black to-mugen-dark">
+    <section className="relative py-20 md:py-28 lg:py-36 bg-gradient-to-b from-mugen-black to-mugen-dark">
       <div className="container mx-auto px-4 md:px-8">
         {/* Section Header */}
         <div

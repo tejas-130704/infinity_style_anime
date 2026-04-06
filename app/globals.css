@@ -71,10 +71,38 @@
   filter: drop-shadow(0 0 10px rgba(134, 56, 65, 0.45));
 }
 
-/* Smooth Scroll */
+/* Smooth Scroll + Global Scrollbar */
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(134, 56, 65, 0.75) transparent;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 0px; /* hides horizontal scrollbars globally */
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(184, 77, 122, 0.90) 0%,
+    rgba(134, 56, 65, 0.78) 100%
+  );
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(215, 100, 150, 1.00) 0%,
+    rgba(160, 65, 80, 0.95) 100%
+  );
 }
 
 /* 3D Effects */
