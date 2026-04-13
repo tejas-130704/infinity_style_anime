@@ -1,7 +1,9 @@
 import { Suspense } from 'react'
+import { redirectHomeIfAuthenticated } from '@/lib/auth/redirect-if-authenticated'
 import { LoginForm } from './LoginForm'
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await redirectHomeIfAuthenticated()
   return (
     <Suspense
       fallback={

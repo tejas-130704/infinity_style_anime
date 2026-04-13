@@ -1,13 +1,5 @@
 import Link from 'next/link'
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Github,
-  Twitter,
-  Instagram,
-  Infinity as InfinityMark,
-} from 'lucide-react'
+import { Mail, Phone, MapPin, Github, Twitter, Instagram, Infinity as InfinityMark } from 'lucide-react'
 
 const QUICK_LINKS = [
   { label: 'Shop',                  href: '/shop' },
@@ -30,52 +22,53 @@ export function Footer() {
       {/* Top Glow */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-mugen-crimson to-transparent" />
 
-      <div className="container mx-auto px-4 md:px-8 py-8 md:py-12">
+      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Company Info */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="mb-4 flex items-center gap-3">
               <div
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-mugen-crimson via-mugen-magenta/80 to-mugen-gold shadow-md ring-1 ring-white/15"
                 aria-hidden
               >
                 <InfinityMark className="h-5 w-5 text-white" strokeWidth={2.4} />
               </div>
-              <span className="font-cinzel text-lg font-bold tracking-tight text-white">
-                Infinity Style
-              </span>
+              <span className="font-cinzel text-lg font-bold tracking-tight text-white">Infinity Style</span>
             </div>
             <p className="font-sans text-sm font-medium leading-relaxed mb-6 text-white">
               Premium anime merchandise with exclusive drops and custom designs. Bringing legends to life.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-3">
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-mugen-gray flex items-center justify-center text-mugen-gold glow-gold
+                className="tap-target rounded-full bg-mugen-gray text-mugen-glow glow-gold
                   transition-all duration-300 ease-out
-                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
-                  active:scale-95 active:translate-y-0"
+                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
+                  active:scale-95 md:hover:scale-110 md:hover:-translate-y-0.5"
+                aria-label="Twitter"
               >
-                <Twitter size={18} />
+                <Twitter className="h-[18px] w-[18px]" aria-hidden />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-mugen-gray flex items-center justify-center text-mugen-gold glow-gold
+                className="tap-target rounded-full bg-mugen-gray text-mugen-glow glow-gold
                   transition-all duration-300 ease-out
-                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
-                  active:scale-95 active:translate-y-0"
+                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
+                  active:scale-95 md:hover:scale-110 md:hover:-translate-y-0.5"
+                aria-label="Instagram"
               >
-                <Instagram size={18} />
+                <Instagram className="h-[18px] w-[18px]" aria-hidden />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-mugen-gray flex items-center justify-center text-mugen-gold glow-gold
+                className="tap-target rounded-full bg-mugen-gray text-mugen-glow glow-gold
                   transition-all duration-300 ease-out
-                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
-                  active:scale-95 active:translate-y-0"
+                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
+                  active:scale-95 md:hover:scale-110 md:hover:-translate-y-0.5"
+                aria-label="GitHub"
               >
-                <Github size={18} />
+                <Github className="h-[18px] w-[18px]" aria-hidden />
               </a>
             </div>
           </div>
@@ -85,12 +78,12 @@ export function Footer() {
             <h3 className="font-cinzel text-lg font-bold mb-6 text-white">
               Quick Links
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-1">
               {QUICK_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="font-sans text-sm font-medium text-white hover:text-mugen-glow transition-colors duration-200"
+                    className="link-underline-anim block min-h-11 py-2.5 font-sans text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0 sm:py-0"
                   >
                     {link.label}
                   </Link>
@@ -104,18 +97,16 @@ export function Footer() {
             <h3 className="font-cinzel text-lg font-bold mb-6 text-white">
               Support
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-1">
               {[
                 { label: 'About Us', href: '/about' },
                 { label: 'Contact',  href: '/about#contact-heading' },
                 { label: 'FAQ',      href: '/about#faq-heading' },
-                { label: 'Shipping Info', href: '#' },
-                { label: 'Returns',  href: '#' },
               ].map((link) => (
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="font-sans text-sm font-medium text-white hover:text-mugen-glow transition-colors duration-200"
+                    className="link-underline-anim block min-h-11 py-2.5 font-sans text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0 sm:py-0"
                   >
                     {link.label}
                   </a>
@@ -132,17 +123,17 @@ export function Footer() {
             <div className="space-y-4">
               <a
                 href="mailto:support@mugendrip.com"
-                className="flex items-start gap-3 text-sm font-medium text-white hover:text-mugen-glow transition-colors duration-200"
+                className="group flex items-start gap-3 text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow"
               >
-                <Mail size={18} className="flex-shrink-0 mt-0.5" />
-                <span>support@mugendrip.com</span>
+                <Mail size={18} className="mt-0.5 shrink-0 opacity-80 group-hover:opacity-100" aria-hidden />
+                <span className="link-underline-anim">support@mugendrip.com</span>
               </a>
               <a
                 href="tel:+919876543210"
-                className="flex items-start gap-3 text-sm font-medium text-white hover:text-mugen-glow transition-colors duration-200"
+                className="group flex items-start gap-3 text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow"
               >
-                <Phone size={18} className="flex-shrink-0 mt-0.5" />
-                <span>+91 (98765) 43210</span>
+                <Phone size={18} className="mt-0.5 shrink-0 opacity-80 group-hover:opacity-100" aria-hidden />
+                <span className="link-underline-anim">+91 (98765) 43210</span>
               </a>
               <div className="flex items-start gap-3 text-sm font-medium text-white">
                 <MapPin size={18} className="flex-shrink-0 mt-0.5" />
@@ -167,14 +158,23 @@ export function Footer() {
           </p>
 
           {/* Links */}
-          <div className="flex gap-6 font-sans text-sm font-medium text-white">
-            <a href="#" className="hover:text-mugen-glow transition-colors">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-sans text-sm font-medium text-white md:justify-end">
+            <a
+              href="#"
+              className="link-underline-anim min-h-11 py-2 text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0"
+            >
               Privacy Policy
             </a>
-            <a href="#" className="hover:text-mugen-glow transition-colors">
+            <a
+              href="#"
+              className="link-underline-anim min-h-11 py-2 text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0"
+            >
               Terms of Service
             </a>
-            <a href="#" className="hover:text-mugen-glow transition-colors">
+            <a
+              href="#"
+              className="link-underline-anim min-h-11 py-2 text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0"
+            >
               Cookie Policy
             </a>
           </div>

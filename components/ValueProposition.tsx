@@ -34,9 +34,9 @@ const cards = [
   {
     icon: Shield,
     title: 'Secure & Safe',
-    tag: '7-Day Returns',
+    tag: 'Protected',
     description:
-      'Bank-level encryption, fully insured shipments, and a hassle-free return policy within 7 days.',
+      'Bank-level encryption and careful packaging so your order reaches you safely.',
     accent: '#7C3AED',
     glowRgb: '124,58,237',
     border: 'rgba(124,58,237,0.4)',
@@ -71,7 +71,7 @@ export function ValueProposition() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-mugen-crimson/30 to-transparent" />
       </div>
 
-      <div className="container mx-auto px-4 md:px-8 relative z-10">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8">
         {/* Section Header */}
         <div className="mb-12 md:mb-16 text-left" data-aos="fade-up" data-aos-duration="800">
           <SectionTitle
@@ -97,7 +97,7 @@ export function ValueProposition() {
                 onMouseLeave={() => setHoveredIndex(null)}
               >
                 <div
-                  className="relative h-full min-h-[280px] rounded-2xl overflow-hidden flex flex-col transition-all duration-500 ease-out"
+                  className="relative h-full min-h-[260px] rounded-2xl overflow-hidden flex flex-col transition-all duration-500 ease-out sm:min-h-[280px] md:min-h-[280px]"
                   style={{
                     background: `linear-gradient(to bottom, ${card.gradFrom}, rgba(42,38,36,0.85) 60%, #22201f)`,
                     border: `1px solid ${card.border}`,
@@ -108,7 +108,7 @@ export function ValueProposition() {
                   {/* Shimmer sweep */}
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-full bg-gradient-to-r from-transparent via-white/8 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:translate-x-[350%] group-hover:opacity-100"
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-full bg-gradient-to-r from-transparent via-white/8 to-transparent opacity-0 transition-all duration-700 ease-out md:group-hover:translate-x-[350%] md:group-hover:opacity-100"
                   />
 
                   <div className="relative z-10 flex flex-col flex-1 p-6">

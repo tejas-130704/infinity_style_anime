@@ -1,11 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getServerSessionSafe } from '@/lib/auth/safe-get-server-session'
 import { createClient } from '@/lib/supabase/server'
-
-function formatPrice(cents: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100)
-}
+import { createAdminClient } from '@/lib/supabase/admin'
+import { formatCurrency } from '@/lib/pricing-utils'
 
 function statusLabel(status: string) {
   const map: Record<string, string> = {
@@ -21,8 +20,9 @@ function statusLabel(status: string) {
 function paymentLabel(payment: string) {
   const map: Record<string, string> = {
     pending: 'Payment pending',
-    paid: 'Paid',
+    completed: 'Paid',
     failed: 'Failed',
+    refunded: 'Refunded',
   }
   return map[payment] ?? payment
 }
@@ -34,11 +34,15 @@ export default async function OrdersPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) {
+  const session = await getServerSessionSafe()
+  const nextUid = (session?.user as { id?: string } | undefined)?.id
+  const userId = user?.id ?? nextUid
+  if (!userId) {
     redirect('/login?next=/account/orders')
   }
 
-  const { data: orders } = await supabase
+  const db = createAdminClient()
+  const { data: orders } = await db
     .from('orders')
     .select(
       `
@@ -55,7 +59,7 @@ export default async function OrdersPage() {
       )
     `
     )
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
   const list = orders ?? []
@@ -95,9 +99,17 @@ export default async function OrdersPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-mugen-gold">{formatPrice(order.total_price)}</p>
+                    <p className="font-semibold text-mugen-gold">{formatCurrency(order.total_price)}</p>
                     <p className="text-sm text-white/70">{statusLabel(order.status)}</p>
                     <p className="text-xs text-white/50">{paymentLabel(order.payment_status)}</p>
+                    {order.payment_status === 'completed' && (
+                      <Link
+                        href={`/orders/${order.id}`}
+                        className="mt-2 inline-block text-xs font-semibold text-mugen-gold hover:text-white"
+                      >
+                        Track order →
+                      </Link>
+                    )}
                   </div>
                 </div>
                 <ul className="divide-y divide-white/5">
@@ -126,7 +138,7 @@ export default async function OrdersPage() {
                             {p?.name ?? 'Product'}
                           </p>
                           <p className="text-sm text-white/60">
-                            Qty {line.quantity} · {formatPrice(line.price)} each
+                            Qty {line.quantity} · {formatCurrency(line.price)} each
                           </p>
                         </div>
                       </li>

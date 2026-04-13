@@ -93,6 +93,10 @@ const config: Config = {
       perspective: {
         '1200': '1200px',
       },
+      minHeight: {
+        svh: '100svh',
+        dvh: '100dvh',
+      },
     },
   },
   plugins: [],

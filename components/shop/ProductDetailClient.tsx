@@ -4,10 +4,13 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import {
   Star, Box, ShoppingCart, Heart, Share2,
-  Truck, ShieldCheck, Award, RotateCcw, Package, Ruler
+  Truck, ShieldCheck, Award, Package, Ruler
 } from 'lucide-react'
 import { ImageGallery, type GalleryImage } from '@/components/shop/ImageGallery'
 import { AddToCartButton } from '@/components/shop/AddToCartButton'
+import { isCatalogPremiumCategory } from '@/lib/premium-assets-policy'
+import { getRetailPricing } from '@/lib/pricing-utils'
+import { productDetailPath } from '@/lib/product-path'
 
 /* Lazy-load 3D viewer (avoids SSR issues with three.js) */
 const ModelViewer = dynamic(
@@ -53,9 +56,6 @@ function fmt(paise: number) {
   }).format(paise / 100)
 }
 
-function discountPct(final: number, original: number) {
-  return Math.round(((original - final) / original) * 100)
-}
 
 /* ── Star Rating ───────────────────────────────────────────────────────── */
 function StarRating({ rating, count }: { rating: number; count?: number | null }) {
@@ -124,8 +124,20 @@ const SIZE_META: Record<string, { dims: string; price_offset: number }> = {
 
 /* ── Main component ────────────────────────────────────────────────────── */
 export function ProductDetailClient({ product }: { product: ProductFull }) {
+  const [liked, setLiked] = useState(!!(product as any).__liked)
+  const [likeCount, setLikeCount] = useState<number>((product as any).__likeCount ?? 0)
+  const [likeBusy, setLikeBusy] = useState(false)
+
   const isActionFigure = product.category === 'action_figures'
   const isPoster = product.category === 'posters' || product.category === 'limited_edition'
+  const protectCatalogAssets = isCatalogPremiumCategory(product.category)
+  const protectedStlUrl =
+    protectCatalogAssets && isActionFigure && product.model_url
+      ? `/api/premium/product-stl/${product.id}`
+      : product.model_url
+
+  /** Admin must attach a model file (STL/OBJ URL); otherwise hide 3D UI. */
+  const has3DModelFile = Boolean(product.model_url && String(product.model_url).trim())
 
   /* Gallery */
   const extraImages: GalleryImage[] = (() => {
@@ -166,14 +178,14 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
   })()
   const [selectedSize, setSelectedSize] = useState(availableSizes[0] ?? '')
 
-  /* Pricing */
-  const hasDeal = product.original_price != null && product.original_price > product.price
-  const pct = hasDeal ? discountPct(product.price, product.original_price!) : 0
+  /* Pricing from DB (paise); JSON may stringify numbers as strings */
+  const retail = getRetailPricing(product as unknown as Record<string, unknown>)
+  const { salePaisa, mrpPaisa, hasDeal, discountPct: pct } = retail
 
   /* Size-adjusted price for posters */
   const sizeOffset = selectedSize ? (SIZE_META[selectedSize]?.price_offset ?? 0) : 0
-  const displayPrice = product.price + sizeOffset
-  const displayOriginal = product.original_price ? product.original_price + sizeOffset : null
+  const displayPrice = salePaisa + sizeOffset
+  const displayOriginal = mrpPaisa ? mrpPaisa + sizeOffset : null
 
   /* Variant requirements */
   const hasColorVariants = !isMultiColor && colors.length > 1
@@ -201,8 +213,8 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
       : null,
   ].filter(Boolean) as MetaRow[]
 
-  /* 3D view footer button */
-  const gallery3DFooter = isActionFigure && !show3D ? (
+  /* 3D view footer button — only when a 3D asset exists */
+  const gallery3DFooter = isActionFigure && has3DModelFile && !show3D ? (
     <button
       id="btn-3d-view"
       onClick={() => setShow3D(true)}
@@ -252,14 +264,16 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
           <ImageGallery
             images={allImages}
             productName={product.name}
+            productId={product.id}
+            useProtectedImages={protectCatalogAssets}
             footer={gallery3DFooter}
           />
 
           {/* 3D Viewer panel */}
-          {isActionFigure && show3D && (
+          {isActionFigure && has3DModelFile && show3D && (
             <div className="animate-in fade-in-0 slide-in-from-top-2 duration-300">
               <ModelViewer
-                modelUrl={product.model_url}
+                modelUrl={protectedStlUrl}
                 onClose={() => setShow3D(false)}
               />
             </div>
@@ -286,7 +300,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
                 product.category.replace(/_/g, ' ')
               )}
             </span>
-            {isActionFigure && (
+            {isActionFigure && has3DModelFile && (
               <span className="inline-flex items-center gap-1 rounded-full border border-mugen-gold/25
                                bg-mugen-gold/8 px-2.5 py-0.5 font-sans text-[10px] font-bold
                                uppercase tracking-widest text-mugen-gold/80">
@@ -307,37 +321,47 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
 
           <Divider />
 
-          {/* ── Pricing block ── */}
-          <div className="flex flex-col gap-1.5">
+          {/* ── Pricing (e‑commerce style: strikethrough MRP → sale price → % off) ── */}
+          <div className="flex flex-col gap-2">
             {hasDeal ? (
               <>
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
                   <span
-                    className="inline-flex items-center rounded-md bg-mugen-crimson px-2.5 py-0.5
-                               font-sans text-sm font-extrabold text-white shadow-md shadow-mugen-crimson/30"
+                    className="font-sans text-lg sm:text-xl text-white/40 line-through decoration-white/30 tabular-nums"
+                    title="Maximum retail price"
                   >
-                    -{pct}%
+                    {fmt(displayOriginal ?? mrpPaisa!)}
                   </span>
-                  <span className="font-cinzel text-4xl font-bold tracking-tight text-white">
+                  <span className="font-cinzel text-3xl sm:text-4xl font-bold tracking-tight text-white tabular-nums">
                     {fmt(displayPrice)}
                   </span>
+                  <span
+                    className="inline-flex items-center rounded-md bg-emerald-600/95 px-2.5 py-1
+                               font-sans text-xs font-extrabold uppercase tracking-wide text-white shadow-md"
+                  >
+                    {pct}% off
+                  </span>
                 </div>
-                <p className="font-sans text-sm text-white/40">
-                  M.R.P:{' '}
-                  <span className="line-through">{fmt(displayOriginal ?? product.original_price!)}</span>
+                <p className="font-sans text-sm text-white/50">
+                  You save{' '}
+                  <span className="font-semibold text-emerald-400/95 tabular-nums">
+                    {fmt((displayOriginal ?? mrpPaisa!) - displayPrice)}
+                  </span>
+                  <span className="text-white/25"> · </span>
+                  <span className="text-white/35">vs M.R.P (incl. of all taxes)</span>
                 </p>
-                <p className="font-sans text-xs text-green-400/80">
-                  You save {fmt((displayOriginal ?? product.original_price!) - displayPrice)} ({pct}%)
-                </p>
-                <p className="font-sans text-[11px] text-white/30">Inclusive of all taxes</p>
+                <p className="font-sans text-[11px] text-white/28">Inclusive of all taxes</p>
               </>
             ) : (
-              <span className="font-cinzel text-4xl font-bold text-mugen-gold tracking-tight">
-                {fmt(displayPrice)}
-              </span>
+              <>
+                <span className="font-cinzel text-3xl sm:text-4xl font-bold text-mugen-gold tracking-tight tabular-nums">
+                  {fmt(displayPrice)}
+                </span>
+                <p className="font-sans text-[11px] text-white/28">Inclusive of all taxes</p>
+              </>
             )}
             {sizeOffset > 0 && (
-              <p className="font-sans text-[11px] text-white/35 mt-0.5">
+              <p className="font-sans text-[11px] text-white/35">
                 Price adjusted for selected size
               </p>
             )}
@@ -355,10 +379,8 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
               <div className="flex flex-wrap gap-2.5">
                 {colors.map((c, i) => {
                   const isActive = selectedColor === c
-                  const variantPrice = product.price + i * 50000
-                  const variantOriginal = product.original_price
-                    ? product.original_price + i * 50000
-                    : null
+                  const variantPrice = salePaisa + i * 50000
+                  const variantOriginal = mrpPaisa ? mrpPaisa + i * 50000 : null
                   return (
                     <button
                       key={c}
@@ -506,7 +528,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
             {[
               { Icon: Truck,       text: 'Free shipping ₹999+', sub: 'Pan India delivery' },
               { Icon: ShieldCheck, text: 'Secure payment',       sub: 'SSL encrypted' },
-              { Icon: RotateCcw,   text: '7-day returns',        sub: 'Easy & hassle-free' },
+              { Icon: Package,     text: 'Careful packaging',    sub: 'Protected in transit' },
             ].map(({ Icon, text, sub }) => (
               <div
                 key={text}
@@ -524,6 +546,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
             <div className="flex-1">
               <AddToCartButton
                 productId={product.id}
+                productSlug={product.slug}
                 selectedColor={!isMultiColor && colors.length > 0 ? selectedColor : undefined}
                 selectedSize={availableSizes.length > 0 ? selectedSize : undefined}
                 requiresVariant={requiresVariant}
@@ -533,12 +556,46 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
             <button
               id="btn-wishlist"
               aria-label="Save to wishlist"
-              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl
-                         border border-white/10 bg-white/5 text-white/40 transition-all
-                         hover:border-mugen-magenta/50 hover:bg-mugen-magenta/10 hover:text-mugen-magenta
-                         hover:shadow-[0_0_16px_rgba(184,77,122,0.2)]"
+              disabled={likeBusy}
+              onClick={async () => {
+                setLikeBusy(true)
+                try {
+                  const res = await fetch('/api/likes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: product.id }),
+                  })
+                  const raw = await res.text()
+                  let j: { liked?: boolean; likeCount?: number; error?: string } = {}
+                  try {
+                    j = raw ? JSON.parse(raw) : {}
+                  } catch {
+                    j = {}
+                  }
+                  if (!res.ok) {
+                    if (res.status === 401) {
+                      window.location.href = `/login?next=${encodeURIComponent(productDetailPath(product))}`
+                      return
+                    }
+                    throw new Error(j.error || 'Like failed')
+                  }
+                  const nextLiked = typeof j.liked === 'boolean' ? j.liked : !liked
+                  setLiked(nextLiked)
+                  if (typeof j.likeCount === 'number') setLikeCount(j.likeCount)
+                } catch (e) {
+                  console.error('[likes]', e)
+                } finally {
+                  setLikeBusy(false)
+                }
+              }}
+              className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border transition-all
+                ${liked
+                  ? 'border-red-500/50 bg-red-500/15 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
+                  : 'border-white/10 bg-white/5 hover:border-red-400/40 hover:bg-red-500/10 hover:shadow-[0_0_16px_rgba(239,68,68,0.15)]'}`}
             >
-              <Heart className="h-5 w-5" />
+              <Heart
+                className={`h-5 w-5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-white/40 hover:text-red-400'}`}
+              />
             </button>
             <button
               id="btn-share"

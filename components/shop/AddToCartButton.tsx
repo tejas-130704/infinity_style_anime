@@ -2,13 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ShoppingCart, CheckCircle, AlertCircle, Loader2, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { productDetailPath } from '@/lib/product-path'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
 interface AddToCartButtonProps {
   productId: string
+  /** Used for post-login redirect URL (pretty /product/slug when set). */
+  productSlug?: string | null
   /** Pass the currently selected color (for single-color products) */
   selectedColor?: string
   /** Pass the currently selected size (for poster products)  */
@@ -24,12 +28,14 @@ interface AddToCartButtonProps {
 
 export function AddToCartButton({
   productId,
+  productSlug,
   selectedColor,
   selectedSize,
   requiresVariant = false,
   variantLabel = 'a variant',
 }: AddToCartButtonProps) {
-  const router  = useRouter()
+  const router = useRouter()
+  const { status: nextAuthStatus } = useSession()
   const [status, setStatus] = useState<Status>('idle')
   const [errMsg, setErrMsg] = useState<string | null>(null)
   const [showVariantError, setShowVariantError] = useState(false)
@@ -49,9 +55,13 @@ export function AddToCartButton({
     setStatus('loading')
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push(`/login?next=/product/${productId}`)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const signedIn = !!user || nextAuthStatus === 'authenticated'
+    if (!signedIn) {
+      const nextPath = productDetailPath({ id: productId, slug: productSlug ?? null })
+      router.push(`/login?next=${encodeURIComponent(nextPath)}`)
       setStatus('idle')
       return
     }

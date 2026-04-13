@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GlowButton } from '@/components/GlowButton'
+import { GoogleLogin } from '@/components/GoogleLogin'
+import { toast } from 'react-toastify'
 
 export function SignupForm() {
   const router = useRouter()
@@ -15,6 +17,13 @@ export function SignupForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const authError = searchParams.get('error')
+    if (authError === 'account_not_found') {
+      toast.error('No account found, please sign up.')
+    }
+  }, [searchParams])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -78,7 +87,12 @@ export function SignupForm() {
             {loading ? 'Creating…' : 'Sign up'}
           </GlowButton>
         </form>
-        <p className="mt-6 text-center text-sm text-white/60">
+
+        <div className="mt-4">
+          <GoogleLogin mode="signup" />
+        </div>
+
+        <p className="mt-4 text-center text-sm text-white/60">
           Already have an account?{' '}
           <Link
             href={`/login?next=${encodeURIComponent(next)}`}

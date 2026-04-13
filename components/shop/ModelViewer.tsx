@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useRef, useState } from 'react'
+import { Suspense, useRef, useState, useEffect } from 'react'
 import { Canvas, useLoader, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, Center, Grid } from '@react-three/drei'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
@@ -94,6 +94,51 @@ export function ModelViewer({ modelUrl, onClose }: ModelViewerProps) {
   const [expanded,   setExpanded]   = useState(false)
   const [paused,     setPaused]     = useState(false)
   const [showInfo,   setShowInfo]   = useState(false)
+
+  /** Blob fetch for /api/premium/* only; external STL URLs (e.g. custom flows) stay direct. */
+  const [premiumBlobUrl, setPremiumBlobUrl] = useState<string | null>(null)
+  const [stlFetch, setStlFetch] = useState<'idle' | 'loading' | 'auth' | 'fail'>('idle')
+
+  const effectiveModelUrl =
+    modelUrl && !modelUrl.startsWith('/api/premium/') ? modelUrl : premiumBlobUrl
+
+  useEffect(() => {
+    if (!modelUrl?.startsWith('/api/premium/')) {
+      setPremiumBlobUrl(null)
+      setStlFetch('idle')
+      return
+    }
+    let blobUrl: string | null = null
+    const ac = new AbortController()
+    setStlFetch('loading')
+    setPremiumBlobUrl(null)
+    ;(async () => {
+      try {
+        const res = await fetch(modelUrl, { credentials: 'include', signal: ac.signal })
+        if (res.status === 401) {
+          setStlFetch('auth')
+          return
+        }
+        if (!res.ok) {
+          setStlFetch('fail')
+          return
+        }
+        const b = await res.blob()
+        blobUrl = URL.createObjectURL(b)
+        setPremiumBlobUrl(blobUrl)
+        setStlFetch('idle')
+      } catch {
+        if (!ac.signal.aborted) setStlFetch('fail')
+      }
+    })()
+    return () => {
+      ac.abort()
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    }
+  }, [modelUrl])
+
+  const showStlLoading = !!modelUrl && modelUrl.startsWith('/api/premium/') && stlFetch === 'loading'
+  const showStlAuth = stlFetch === 'auth'
 
   return (
     <div
@@ -213,10 +258,26 @@ export function ModelViewer({ modelUrl, onClose }: ModelViewerProps) {
 
       {/* ── Canvas area ── */}
       <div className="relative flex-1" style={{ minHeight: 360 }}>
-        {modelUrl ? (
+        {showStlAuth && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#16140f]/95 px-6 text-center">
+            <p className="font-sans text-sm text-white/80">Sign in to view this 3D preview.</p>
+            <a
+              href="/login"
+              className="rounded-lg bg-mugen-gold/90 px-4 py-2 text-xs font-bold text-mugen-black"
+            >
+              Sign in
+            </a>
+          </div>
+        )}
+        {showStlLoading && (
+          <div className="absolute inset-0 z-10">
+            <CanvasLoader />
+          </div>
+        )}
+        {modelUrl && !showStlAuth && effectiveModelUrl ? (
           <Suspense fallback={<CanvasLoader />}>
             <Canvas
-              key={resetKey}
+              key={`${resetKey}-${effectiveModelUrl}`}
               camera={{ position: [0, 1.8, 5], fov: 48 }}
               shadows
               gl={{ antialias: true, alpha: false }}
@@ -239,7 +300,7 @@ export function ModelViewer({ modelUrl, onClose }: ModelViewerProps) {
 
               {/* Model */}
               <Suspense fallback={null}>
-                <STLModel url={modelUrl} paused={paused} />
+                <STLModel url={effectiveModelUrl} paused={paused} />
                 <Environment preset="studio" />
               </Suspense>
 
@@ -271,13 +332,19 @@ export function ModelViewer({ modelUrl, onClose }: ModelViewerProps) {
               />
             </Canvas>
           </Suspense>
-        ) : (
+        ) : modelUrl && stlFetch === 'fail' ? (
+          <div className="flex h-full min-h-[360px] items-center justify-center px-6 text-center font-sans text-sm text-white/50">
+            Could not load the 3D preview. Try again later.
+          </div>
+        ) : !modelUrl ? (
           <NoModelPlaceholder />
+        ) : (
+          <CanvasLoader />
         )}
       </div>
 
       {/* ── Footer badge strip ── */}
-      {modelUrl && (
+      {modelUrl && effectiveModelUrl && !showStlAuth && (
         <div className="flex items-center justify-center gap-4 border-t border-white/5 px-4 py-2 flex-shrink-0">
           {[
             { dot: 'bg-green-400', label: 'STL Loaded' },

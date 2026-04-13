@@ -96,7 +96,7 @@ export function FeaturedCollections() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-mugen-crimson/40 to-transparent" />
       </div>
 
-      <div className="container mx-auto px-4 md:px-8 relative z-10">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8">
         {/* Heading */}
         <div className="mb-16 md:mb-20 text-left" data-aos="fade-up" data-aos-duration="800">
           <SectionTitle
@@ -123,19 +123,20 @@ export function FeaturedCollections() {
               >
                 <Link href={`/shop?collection=${col.id}`} className="block h-full">
                   <div
-                    className={`relative h-full min-h-[360px] rounded-2xl border overflow-hidden flex flex-col transition-all duration-500 ease-out
+                    className={`relative h-full min-h-80 sm:min-h-[360px] rounded-2xl border overflow-hidden flex flex-col transition-all duration-500 ease-out
                       bg-gradient-to-b ${col.color}
                       ${col.border}
-                      ${isHovered ? `${col.glow} -translate-y-2 scale-[1.02]` : 'hover:-translate-y-1'}
+                      ${isHovered ? `${col.glow} md:-translate-y-2 md:scale-[1.02]` : 'md:hover:-translate-y-1'}
+                      active:scale-[0.99] md:active:scale-100
                     `}
                   >
                     {/* Inner gradient overlay */}
-                    <div className={`absolute inset-0 ${col.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                    <div className={`absolute inset-0 ${col.gradient} opacity-0 transition-opacity duration-500 md:group-hover:opacity-100`} />
 
                     {/* Shimmer sweep on hover */}
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-full bg-gradient-to-r from-transparent via-white/8 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:translate-x-[350%] group-hover:opacity-100"
+                      className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-full bg-gradient-to-r from-transparent via-white/8 to-transparent opacity-0 transition-all duration-700 ease-out md:group-hover:translate-x-[350%] md:group-hover:opacity-100"
                     />
 
                     {/* Card content */}

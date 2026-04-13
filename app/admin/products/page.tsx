@@ -1,12 +1,15 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { shouldOptimizeImageSrc } from '@/lib/image-allowlist'
 import {
   Plus, X, Upload, Trash2, Pencil, AlertCircle, CheckCircle2,
   Image as ImageIcon, Box, Palette, Ruler, Package, Tag
 } from 'lucide-react'
 import type { ProductRow } from '@/components/shop/ProductCard'
+import { getRetailPricing, pickMrpRaw, resolveRetailMrp } from '@/lib/pricing-utils'
 
 /* ── Constants ─────────────────────────────────────────────────────── */
 const CATEGORIES = [
@@ -43,10 +46,17 @@ function paiseFromInput(s: string) {
 
 /* ── Image preview card ────────────────────────────────────────────── */
 function ImagePreview({ url, onRemove, isPrimary }: { url: string; onRemove: () => void; isPrimary: boolean }) {
+  const opt = shouldOptimizeImageSrc(url)
   return (
     <div className="relative group aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/3">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={url} alt="" className="h-full w-full object-cover" />
+      <Image
+        src={url}
+        alt=""
+        fill
+        className="object-cover"
+        sizes="120px"
+        unoptimized={!opt}
+      />
       {isPrimary && (
         <span className="absolute top-1.5 left-1.5 rounded-full bg-mugen-crimson/90 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
           Primary
@@ -162,7 +172,7 @@ export default function AdminProductsPage() {
 
   /* ── Load products ── */
   const load = useCallback(async () => {
-    const res = await fetch('/api/products')
+    const res = await fetch('/api/products', { cache: 'no-store' })
     const j = await res.json().catch(() => ({}))
     if (!res.ok) { setGlobalErr(j.error || 'Failed to load'); return }
     setProducts(j.products ?? [])
@@ -234,7 +244,13 @@ export default function AdminProductsPage() {
     setCategory((p.category ?? 'posters') as CategoryValue)
     setDesc((p.description as string) ?? '')
     setPriceInput(String((p.price / 100).toFixed(2)))
-    setOriginalInput(p.original_price ? String(((p.original_price as number) / 100).toFixed(2)) : '')
+    const rawMrp = pickMrpRaw(p as Record<string, unknown>)
+    const effMrp =
+      resolveRetailMrp(p.price, rawMrp) ??
+      (rawMrp != null && rawMrp !== '' && Number.isFinite(Number(rawMrp))
+        ? Math.round(Number(rawMrp))
+        : NaN)
+    setOriginalInput(Number.isFinite(effMrp) && effMrp > 0 ? String((effMrp / 100).toFixed(2)) : '')
     setModelName((p.model_name as string) ?? '')
     setHeightCm(p.height_cm != null ? String(p.height_cm) : '')
     setWeightG(p.weight_g != null ? String(p.weight_g) : '')
@@ -265,11 +281,13 @@ export default function AdminProductsPage() {
     e.preventDefault()
     setGlobalErr(null)
     const price = paiseFromInput(priceInput)
+    const origFromInput = paiseFromInput(originalInput)
     if (!name.trim() || !Number.isFinite(price) || price < 0) {
       setGlobalErr('Please enter a valid name and price')
       return
     }
-    const original_price = Number.isFinite(origVal) && origVal > 0 ? origVal : null
+    const original_price =
+      Number.isFinite(origFromInput) && origFromInput > 0 ? origFromInput : null
     const image_url  = imageUrls[0] ?? null
     const extra_imgs = imageUrls.slice(1)
     const payload = {
@@ -361,12 +379,14 @@ export default function AdminProductsPage() {
             </div>
             <Field label="Product Type" required>
               <select
-                className={inputCls}
+                className={`${inputCls} cursor-pointer`}
                 value={category}
                 onChange={e => setCategory(e.target.value as CategoryValue)}
               >
-                {CATEGORIES.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value} style={{ backgroundColor: '#22201f', color: '#f5f5f5' }}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -716,26 +736,46 @@ export default function AdminProductsPage() {
               <tbody className="divide-y divide-white/[0.04]">
                 {products.map(p => {
                   const ext = p as ProductRow & Record<string, unknown>
-                  const hasDeal = ext.original_price != null && (ext.original_price as number) > p.price
-                  const dpct = hasDeal ? Math.round((((ext.original_price as number) - p.price) / (ext.original_price as number)) * 100) : 0
+                  const retail = getRetailPricing(ext)
+                  const { mrpPaisa, hasDeal, discountPct: dpct } = retail
+                  const rawMrpVal = pickMrpRaw(ext)
+                  const rawMrpNum =
+                    rawMrpVal != null && rawMrpVal !== ''
+                      ? (() => {
+                          const n = Math.round(Number(rawMrpVal))
+                          return Number.isFinite(n) && n > 0 ? n : null
+                        })()
+                      : null
                   return (
                     <tr key={p.id} className="group hover:bg-white/[0.02] transition-colors">
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           {p.image_url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.image_url} alt="" className="h-10 w-10 rounded-lg object-cover border border-white/8" />
+                            <Image
+                              src={p.image_url}
+                              alt=""
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 rounded-lg object-cover border border-white/8"
+                              unoptimized={!shouldOptimizeImageSrc(p.image_url)}
+                            />
                           )}
                           <span className="font-medium text-white">{p.name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-white/50 capitalize">{p.category.replace(/_/g, ' ')}</td>
-                      <td className="px-4 py-3.5 font-cinzel font-bold text-mugen-gold">{fmt(p.price)}</td>
+                      <td className="px-4 py-3.5 font-cinzel font-bold text-mugen-gold">{fmt(retail.salePaisa)}</td>
                       <td className="px-4 py-3.5">
-                        {hasDeal ? (
-                          <span className="flex items-center gap-2">
-                            <span className="text-white/35 line-through text-xs">{fmt(ext.original_price as number)}</span>
-                            <span className="rounded-md bg-mugen-crimson/80 px-1.5 py-0.5 text-[10px] font-bold text-white">-{dpct}%</span>
+                        {hasDeal && mrpPaisa != null ? (
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-white/45 line-through text-sm tabular-nums">{fmt(mrpPaisa)}</span>
+                            <span className="rounded-md bg-emerald-600/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                              {dpct}% off
+                            </span>
+                          </span>
+                        ) : rawMrpNum != null ? (
+                          <span className="text-sm text-white/50 tabular-nums" title="M.R.P stored in DB">
+                            {fmt(rawMrpNum)}
                           </span>
                         ) : (
                           <span className="text-white/25">—</span>

@@ -1,19 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Infinity as InfinityMark,
-  Mail,
-  MessageSquare,
-  Sparkles,
-  Target,
-  Heart,
-  Star,
-  Send,
-  ArrowRight,
-} from 'lucide-react'
+import { Mail, MessageSquare, Sparkles, Target, Heart, Star, Send, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { BRAND_LOGO_PNG_SRC } from '@/lib/constants'
 
 /* ─── Visual Gallery Images ─── */
 const GALLERY = [
@@ -186,13 +177,13 @@ export default function AboutPage() {
           transform: translateY(-6px) scale(1.015);
           box-shadow: 0 20px 50px rgba(134,56,65,0.35);
         }
-        .gallery-card img {
+        .gallery-card .gallery-image {
           width: 100%;
           height: 100%;
           object-fit: cover;
           transition: transform 0.4s ease;
         }
-        .gallery-card:hover img { transform: scale(1.06); }
+        .gallery-card:hover .gallery-image { transform: scale(1.06); }
         .gallery-label {
           position: absolute;
           bottom: 0; left: 0; right: 0;
@@ -241,8 +232,15 @@ export default function AboutPage() {
           <section aria-labelledby="about-hero" className="hero-banner px-6 py-20 md:py-28 mb-0 text-center fade-up">
             {/* Floating logo */}
             <div className="mb-7 flex justify-center">
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-mugen-crimson via-pink-800 to-mugen-gold shadow-[0_0_50px_rgba(134,56,65,0.55)] ring-1 ring-white/15">
-                <InfinityMark className="h-10 w-10 text-white drop-shadow-lg" strokeWidth={2.2} />
+              <div className="rounded-full border border-cyan-500/40 bg-gradient-to-br from-cyan-950/80 via-[#0f172a]/90 to-sky-950/80 p-4 shadow-[0_0_56px_rgba(6,182,212,0.45)] ring-1 ring-cyan-400/20">
+                <Image
+                  src={BRAND_LOGO_PNG_SRC}
+                  alt=""
+                  width={96}
+                  height={96}
+                  className="h-24 w-24 rounded-full object-contain object-center drop-shadow-[0_0_28px_rgba(6,182,212,0.45)] ring-1 ring-white/10"
+                  priority
+                />
               </div>
             </div>
 
@@ -355,16 +353,22 @@ export default function AboutPage() {
             <div className="gallery-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {GALLERY.map((item, i) => (
                 <div key={item.label} className={`gallery-card fade-up delay-${Math.min(i + 1, 4)}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.src}
-                    alt={item.alt}
-                    loading="lazy"
-                    onError={(e) => {
-                      const el = e.currentTarget
-                      el.style.display = 'none'
-                    }}
-                  />
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={item.src}
+                      alt={item.alt}
+                      fill
+                      className="gallery-image"
+                      sizes="(max-width: 640px) 50vw, 25vw"
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc+UGdBV1lZWV1fWFlaY2Nja2NjY2P/2wBDAQ4QERQZKRIkZGRlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVl/wAARCAAFAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwB//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwB//9k="
+                      onError={(e) => {
+                        const el = e.currentTarget
+                        el.style.display = 'none'
+                      }}
+                    />
+                  </div>
                   <div className="gallery-label">{item.label}</div>
                 </div>
               ))}

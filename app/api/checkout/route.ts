@@ -1,36 +1,31 @@
 import { NextResponse } from 'next/server'
-import type Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
-import { getStripe } from '@/lib/stripe'
-
-const siteUrl = () =>
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'http://localhost:3000'
+import { getCartContext } from '@/lib/cart/get-cart-context'
+import { validateCouponForCart } from '@/lib/coupon/validate'
+import { parseSingleCouponFromBody } from '@/lib/coupon/single-coupon-input'
+import { DELIVERY_CHARGE } from '@/lib/constants'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
+  const ctx = await getCartContext()
+  if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const {
-    name,
-    phone1,
-    phone2,
-    email,
-    address,
-    city,
-    state,
-  } = body as Record<string, string>
+  const { userId, db } = ctx
+
+  const body = (await request.json()) as Record<string, unknown>
+  const parsedCoupon = parseSingleCouponFromBody(body)
+  if (!parsedCoupon.ok) {
+    return NextResponse.json({ error: parsedCoupon.error }, { status: 400 })
+  }
+  const coupon_code = parsedCoupon.code
+
+  const { name, phone1, phone2, email, address, city, state } = body as Record<string, unknown>
 
   if (!name || !phone1 || !email || !address || !city || !state) {
     return NextResponse.json({ error: 'Missing address fields' }, { status: 400 })
   }
 
-  const { data: cartRows, error: cartError } = await supabase
+  const { data: cartRows, error: cartError } = await db
     .from('cart_items')
     .select(
       `
@@ -44,16 +39,16 @@ export async function POST(request: Request) {
       )
     `
     )
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
 
   if (cartError || !cartRows?.length) {
     return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
   }
 
-  const { data: addr, error: addrErr } = await supabase
+  const { data: addr, error: addrErr } = await db
     .from('addresses')
     .insert({
-      user_id: user.id,
+      user_id: userId,
       name,
       phone1,
       phone2: phone2 || null,
@@ -69,9 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: addrErr?.message ?? 'Address failed' }, { status: 500 })
   }
 
-  let total = 0
-  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
-
+  let itemTotalPaisa = 0
   for (const row of cartRows) {
     const p = row.products as unknown as {
       id: string
@@ -81,30 +74,69 @@ export async function POST(request: Request) {
     }
     if (!p) continue
     const line = p.price * row.quantity
-    total += line
-    lineItems.push({
-      quantity: row.quantity,
-      price_data: {
-        currency: 'usd',
-        unit_amount: p.price,
-        product_data: {
-          name: p.name,
-          images: p.image_url ? [p.image_url] : [],
-        },
-      },
-    })
+    itemTotalPaisa += line
   }
 
-  if (!lineItems.length) {
+  if (itemTotalPaisa === 0) {
     return NextResponse.json({ error: 'Invalid cart' }, { status: 400 })
   }
 
-  const { data: order, error: orderErr } = await supabase
+  const deliveryChargePaisa = DELIVERY_CHARGE * 100
+  const discountBasePaisa = itemTotalPaisa + deliveryChargePaisa
+
+  const productIdsForCoupon = cartRows
+    .map((row) => (row.products as unknown as { id: string } | null)?.id)
+    .filter(Boolean) as string[]
+
+  let coupon_id: string | null = null
+  let clampedDiscount = 0
+  let coupon_snapshot: Record<string, unknown> | null = null
+  let coupon_code_saved: string | null = null
+
+  if (coupon_code) {
+    const v = await validateCouponForCart({
+      couponCode: coupon_code,
+      userId,
+      itemSubtotalPaisa: itemTotalPaisa,
+      discountBasePaisa,
+      deliveryChargePaisa,
+      productIds: productIdsForCoupon,
+    })
+    if (!v.valid) {
+      return NextResponse.json({ error: v.error ?? 'Invalid coupon' }, { status: 400 })
+    }
+    coupon_id = v.coupon_id
+    clampedDiscount = Math.min(v.discount_amount, discountBasePaisa)
+    coupon_code_saved = v.code
+    coupon_snapshot = {
+      code: v.code,
+      coupon_id: v.coupon_id,
+      discount_type: v.discount_type,
+      discount_amount: clampedDiscount,
+      discount_base_paisa: discountBasePaisa,
+      discount_value: v.discount_value,
+      max_discount_amount: v.max_discount_amount,
+      min_order_amount: v.min_order_amount,
+      applied_at: new Date().toISOString(),
+    }
+  }
+
+  const finalTotal = Math.max(0, discountBasePaisa - clampedDiscount)
+  const gstCalc = 0
+
+  const { data: order, error: orderErr } = await db
     .from('orders')
     .insert({
-      user_id: user.id,
+      user_id: userId,
       address_id: addr.id,
-      total_price: total,
+      total_price: finalTotal,
+      subtotal: itemTotalPaisa,
+      delivery_charge: deliveryChargePaisa,
+      discount_amount: clampedDiscount,
+      gst_amount: gstCalc,
+      coupon_id,
+      coupon_code: coupon_code_saved,
+      coupon_snapshot,
       status: 'pending_payment',
       payment_status: 'pending',
     })
@@ -118,7 +150,7 @@ export async function POST(request: Request) {
   for (const row of cartRows) {
     const p = row.products as unknown as { id: string; price: number }
     if (!p) continue
-    await supabase.from('order_items').insert({
+    await db.from('order_items').insert({
       order_id: order.id,
       product_id: p.id,
       quantity: row.quantity,
@@ -126,25 +158,10 @@ export async function POST(request: Request) {
     })
   }
 
-  const stripe = getStripe()
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    customer_email: email,
-    line_items: lineItems,
-    success_url: `${siteUrl()}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl()}/checkout/cancel`,
-    metadata: {
-      order_id: order.id,
-      user_id: user.id,
-    },
+  return NextResponse.json({
+    success: true,
+    order_id: order.id,
+    amount: finalTotal,
+    currency: 'INR',
   })
-
-  await supabase
-    .from('orders')
-    .update({ stripe_checkout_session_id: session.id })
-    .eq('id', order.id)
-
-  await supabase.from('cart_items').delete().eq('user_id', user.id)
-
-  return NextResponse.json({ url: session.url })
 }

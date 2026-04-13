@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect, Suspense, useMemo } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { useState, useCallback, useMemo } from 'react'
 import * as THREE from 'three'
+
+import ModelUploadViewer from '@/components/shop/ModelUploadViewer'
 
 /* ─────────────────────────────────────────────
    CONSTANTS & TYPES
@@ -83,68 +83,6 @@ function computeSignedVolume(geometry: THREE.BufferGeometry): number {
   return Math.abs(volume)
 }
 
-function parseSTLBuffer(buffer: ArrayBuffer): THREE.BufferGeometry {
-  // Detect binary vs ASCII STL
-  const isBinary = (() => {
-    const header = new Uint8Array(buffer, 0, 80)
-    const decoder = new TextDecoder()
-    const text = decoder.decode(header).trimStart()
-    if (text.startsWith('solid')) {
-      // Could still be binary — check triangle count
-      const view = new DataView(buffer)
-      const triCount = view.getUint32(80, true)
-      const expectedSize = 84 + triCount * 50
-      return buffer.byteLength === expectedSize
-    }
-    return true
-  })()
-
-  const geo = new THREE.BufferGeometry()
-
-  if (isBinary) {
-    const view = new DataView(buffer)
-    const triCount = view.getUint32(80, true)
-    const positions: number[] = []
-    const normals: number[] = []
-
-    for (let i = 0; i < triCount; i++) {
-      const offset = 84 + i * 50
-      const nx = view.getFloat32(offset, true)
-      const ny = view.getFloat32(offset + 4, true)
-      const nz = view.getFloat32(offset + 8, true)
-
-      for (let v = 0; v < 3; v++) {
-        const vOffset = offset + 12 + v * 12
-        positions.push(
-          view.getFloat32(vOffset, true),
-          view.getFloat32(vOffset + 4, true),
-          view.getFloat32(vOffset + 8, true),
-        )
-        normals.push(nx, ny, nz)
-      }
-    }
-
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-    geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
-  } else {
-    // ASCII STL
-    const text = new TextDecoder().decode(buffer)
-    const lines = text.split('\n')
-    const positions: number[] = []
-    for (const line of lines) {
-      const t = line.trim()
-      if (t.startsWith('vertex ')) {
-        const parts = t.split(/\s+/)
-        positions.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]))
-      }
-    }
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-    geo.computeVertexNormals()
-  }
-
-  return geo
-}
-
 function computeModelStats(
   geo: THREE.BufferGeometry,
   material: MaterialId,
@@ -175,84 +113,6 @@ function computePrice(weightG: number, material: MaterialId): { base: number; gs
   const base = weightG * mat.rate
   const gst = base * GST_RATE
   return { base, gst, total: Math.round(base + gst) }
-}
-
-/* ─────────────────────────────────────────────
-   THREE.JS STL VIEWER COMPONENTS
-───────────────────────────────────────────── */
-
-function STLMesh({ geometry, color }: { geometry: THREE.BufferGeometry; color: string }) {
-  const mesh = useMemo(() => {
-    const g = geometry.clone()
-    g.computeBoundingBox()
-    const bb = g.boundingBox!
-    const center = new THREE.Vector3()
-    bb.getCenter(center)
-    g.translate(-center.x, -bb.min.y, -center.z)
-
-    // Scale to fit in a ~4 unit view
-    const size = new THREE.Vector3()
-    bb.getSize(size)
-    const maxDim = Math.max(size.x, size.y, size.z)
-    const scale = 4 / maxDim
-    g.scale(scale, scale, scale)
-    g.computeVertexNormals()
-    return g
-  }, [geometry])
-
-  return (
-    <mesh geometry={mesh} castShadow receiveShadow>
-      <meshPhongMaterial
-        color={color}
-        specular={color === '#ffffff' ? '#cccccc' : '#888888'}
-        shininess={color === '#111111' ? 20 : 55}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
-  )
-}
-
-function ViewerScene({ geometry, color }: { geometry: THREE.BufferGeometry | null; color: string }) {
-  const { camera } = useThree()
-
-  useEffect(() => {
-    camera.position.set(4, 3, 5)
-    camera.lookAt(0, 1.5, 0)
-  }, [camera])
-
-  return (
-    <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
-      <directionalLight position={[-4, 4, -4]} intensity={0.3} color="#c8d8e8" />
-      <pointLight position={[0, 8, 2]} intensity={0.4} color="#863841" />
-
-      {/* Grid floor */}
-      <gridHelper args={[10, 10, '#334155', '#1e293b']} position={[0, 0, 0]} />
-
-      {/* Axis helper */}
-      <primitive object={new THREE.AxesHelper(2)} />
-
-      {geometry && <STLMesh geometry={geometry} color={color} />}
-
-      {!geometry && (
-        <mesh position={[0, 1, 0]}>
-          <boxGeometry args={[1.5, 2.5, 1]} />
-          <meshPhongMaterial color="#331a20" wireframe />
-        </mesh>
-      )}
-
-      <OrbitControls
-        makeDefault
-        enableDamping
-        dampingFactor={0.08}
-        minDistance={2}
-        maxDistance={20}
-        minPolarAngle={0}
-        maxPolarAngle={Math.PI / 2 + 0.1}
-      />
-    </>
-  )
 }
 
 /* ─────────────────────────────────────────────
@@ -308,13 +168,11 @@ function StepHeader({
 
 export default function CustomActionFigure() {
   /* ── File + geometry state ── */
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [fileSize, setFileSize] = useState<number>(0)
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null)
-  const [parsing, setParsing] = useState(false)
-  const [parseError, setParseError] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [uploadBusy, setUploadBusy] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   /* ── Config state ── */
   const [customMode, setCustomMode] = useState(false)
@@ -334,63 +192,6 @@ export default function CustomActionFigure() {
     return computePrice(stats.weightG, material)
   }, [stats, material])
 
-  /* ── File processing ── */
-  const processFile = useCallback((file: File) => {
-    const ext = file.name.split('.').pop()?.toLowerCase()
-    if (ext !== 'stl') {
-      setParseError('Please upload a .stl file')
-      return
-    }
-
-    setFileName(file.name)
-    setFileSize(file.size)
-    setParseError(null)
-    setParsing(true)
-    setGeometry(null)
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const buffer = e.target!.result as ArrayBuffer
-        const geo = parseSTLBuffer(buffer)
-        setGeometry(geo)
-      } catch {
-        setParseError('Failed to parse STL. Please check the file is valid.')
-      } finally {
-        setParsing(false)
-      }
-    }
-    reader.onerror = () => {
-      setParseError('Failed to read file.')
-      setParsing(false)
-    }
-    reader.readAsArrayBuffer(file)
-  }, [])
-
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0]
-      if (f) processFile(f)
-    },
-    [processFile],
-  )
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDragging(false)
-      const f = e.dataTransfer.files?.[0]
-      if (f) processFile(f)
-    },
-    [processFile],
-  )
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-  const handleDragLeave = () => setIsDragging(false)
-
   /* ── Cart payload ── */
   const handleAddToCart = () => {
     if (!geometry || !stats || !price) return
@@ -408,7 +209,7 @@ export default function CustomActionFigure() {
     alert(`Added to cart!\n\nMaterial: ${material}\nInfill: ${infill}%\nWeight: ${stats.weightG.toFixed(1)}g\nPrice: ₹${price.total} (incl. GST)`)
   }
 
-  const fileUploaded = !!fileName && !parsing
+  const fileUploaded = !!fileName && !uploadBusy
   const currentMaterial = MATERIALS.find((m) => m.id === material)!
 
   return (
@@ -423,7 +224,7 @@ export default function CustomActionFigure() {
         </span>
       </div>
       <p className="mb-8 max-w-2xl text-sm text-white/60 font-sans leading-relaxed">
-        Upload your <span className="font-medium text-white/90">.stl</span> file, choose your material and infill — we calculate the exact price from your geometry.
+        Upload a <span className="font-medium text-white/90">mesh or CAD</span> file (.stl, .obj with materials, or .step / .iges — CAD is converted to mesh for preview), choose material and infill — we price from your geometry.
       </p>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -432,115 +233,21 @@ export default function CustomActionFigure() {
         ═══════════════════════════════ */}
         <div className="flex flex-col gap-4">
 
-          {/* 3D Viewer */}
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0d1117]" style={{ height: 340 }}>
-            {/* Overlay: file info */}
-            {fileName && (
-              <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/60 backdrop-blur px-3 py-1.5 text-xs text-white/80 font-mono max-w-[60%] truncate shadow-lg">
-                <span className="text-white/50 mr-1.5">▶</span>
-                {fileName}
-                <span className="ml-2 text-white/40">{(fileSize / 1024 / 1024).toFixed(1)} MB</span>
-                <span className="ml-2 text-indigo-300">{infill}%</span>
-              </div>
-            )}
+          <ModelUploadViewer
+            selectedColor={selectedColor}
+            infillPct={infill}
+            onModelGeometry={setGeometry}
+            onFileInfo={(name, size) => {
+              setFileName(name)
+              setFileSize(size)
+            }}
+            onBusy={setUploadBusy}
+            onError={setUploadError}
+          />
 
-            {/* Parsing spinner */}
-            {parsing && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 rounded-full border-2 border-indigo-500/30 border-t-indigo-400 animate-spin" />
-                  <span className="text-xs text-white/60">Parsing geometry…</span>
-                </div>
-              </div>
-            )}
-
-            {/* No file placeholder */}
-            {!fileName && !parsing && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto mb-3 h-16 w-16 rounded-2xl border border-white/8 bg-white/3 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="h-8 w-8 text-white/20">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-white/25 font-sans">Upload a .stl file to preview</p>
-                </div>
-              </div>
-            )}
-
-            <Canvas
-              camera={{ position: [4, 3, 5], fov: 45, near: 0.1, far: 200 }}
-              gl={{ antialias: true, alpha: false }}
-              shadows
-              className="w-full h-full"
-            >
-              <Suspense fallback={null}>
-                <ViewerScene geometry={geometry} color={selectedColor} />
-              </Suspense>
-            </Canvas>
-          </div>
-
-          {/* Upload zone */}
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`relative rounded-xl border-2 border-dashed px-5 py-4 transition-all cursor-pointer ${
-              isDragging
-                ? 'border-indigo-500/70 bg-indigo-500/8'
-                : fileUploaded
-                ? 'border-green-500/40 bg-green-500/5'
-                : 'border-white/12 bg-white/2 hover:border-white/25 hover:bg-white/4'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
-                fileUploaded ? 'bg-green-500/15' : 'bg-white/5'
-              }`}>
-                {fileUploaded ? (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 text-green-400">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 text-white/40">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.338-2.32 5.25 5.25 0 0 1 1.23 9.095H6.75Z" />
-                  </svg>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                {fileUploaded ? (
-                  <>
-                    <p className="text-sm font-semibold text-white/85 truncate">{fileName}</p>
-                    <p className="text-xs text-white/40">Click to replace · {(fileSize / 1024 / 1024).toFixed(2)} MB</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-semibold text-white/70">
-                      UPLOAD MODEL
-                    </p>
-                    <p className="text-xs text-white/35">Drag & drop or click · .stl supported · Max 50 MB</p>
-                  </>
-                )}
-              </div>
-            </div>
-            <input
-              ref={fileInputRef}
-              id="stl-upload"
-              type="file"
-              accept=".stl"
-              className="sr-only"
-              aria-label="Upload STL file"
-              onChange={handleFileChange}
-            />
-          </div>
-          <p className="text-xs text-mugen-crimson/80 font-semibold -mt-2">
-            We currently support stl file format
-          </p>
-
-          {parseError && (
+          {uploadError && (
             <p className="rounded-lg border border-red-500/30 bg-red-950/30 px-4 py-2.5 text-xs text-red-300">
-              {parseError}
+              {uploadError}
             </p>
           )}
 
@@ -645,7 +352,7 @@ export default function CustomActionFigure() {
                 ) : (
                   <p className="font-cinzel text-2xl font-bold text-white/20">— —</p>
                 )}
-                <p className="text-[10px] text-white/30 mt-1">Upload a .stl file to get your personalised quote.</p>
+                <p className="text-[10px] text-white/30 mt-1">Upload a 3D model to get your personalised quote.</p>
               </div>
             </div>
           )}
@@ -892,7 +599,7 @@ export default function CustomActionFigure() {
                       ) : (
                         <>
                           <p className="font-cinzel text-3xl font-bold text-white/20">— —</p>
-                          <p className="text-xs text-white/30 mt-1">Upload a .stl file above to get pricing</p>
+                          <p className="text-xs text-white/30 mt-1">Upload a 3D model above to get pricing</p>
                         </>
                       )}
                     </div>
@@ -920,7 +627,7 @@ export default function CustomActionFigure() {
                       </button>
                     </div>
                     {!fileUploaded && (
-                      <p className="mt-2 text-center text-xs text-white/30">Upload a .stl file to enable checkout</p>
+                      <p className="mt-2 text-center text-xs text-white/30">Upload a 3D model to enable checkout</p>
                     )}
                   </div>
                 )}
@@ -946,7 +653,7 @@ export default function CustomActionFigure() {
             </button>
           )}
           {!customMode && !fileUploaded && (
-            <p className="text-center text-xs text-white/30">Upload a .stl file above to enable this button</p>
+            <p className="text-center text-xs text-white/30">Upload a 3D model above to enable this button</p>
           )}
         </div>
       </div>

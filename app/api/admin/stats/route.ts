@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/admin-auth'
+import { getAdminDashboardKpis } from '@/lib/admin/dashboard-stats'
 
 export async function GET() {
   const supabase = await createClient()
@@ -9,18 +10,11 @@ export async function GET() {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
-  const [{ count: productCount }, { count: orderCount }, { count: pendingCount }] = await Promise.all([
-    supabase.from('products').select('*', { count: 'exact', head: true }),
-    supabase.from('orders').select('*', { count: 'exact', head: true }),
-    supabase
-      .from('orders')
-      .select('*', { count: 'exact', head: true })
-      .in('status', ['pending_payment', 'processing']),
-  ])
+  const kpi = await getAdminDashboardKpis(supabase)
 
   return NextResponse.json({
-    productCount: productCount ?? 0,
-    orderCount: orderCount ?? 0,
-    pendingCount: pendingCount ?? 0,
+    productCount: kpi.productCount,
+    orderCount: kpi.orderCount,
+    pendingCount: kpi.pendingCount,
   })
 }

@@ -1,7 +1,25 @@
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/shop/ProductCard'
-import CustomActionFigure from '@/components/shop/CustomActionFigure'
+
+const CustomActionFigure = dynamic(() => import('@/components/shop/CustomActionFigure'), {
+  loading: () => (
+    <div className="min-h-[320px] rounded-2xl border border-white/5 bg-black/20 animate-pulse" aria-hidden />
+  ),
+})
+
+const PersonalizedPosterUpload = dynamic(
+  () => import('@/components/shop/PersonalizedPosterUpload').then((m) => ({ default: m.PersonalizedPosterUpload })),
+  {
+    loading: () => (
+      <div className="min-h-[320px] rounded-2xl border border-white/5 bg-black/20 animate-pulse" aria-hidden />
+    ),
+  },
+)
+
+/** Cache shop catalog HTML; products refresh periodically (category via searchParams still resolves). */
+export const revalidate = 60
 
 /* ─── Filter tabs ─── */
 const CATEGORIES = [
@@ -141,35 +159,38 @@ export default async function ShopPage({
         .cat-see-all:hover { color: rgba(184,77,122,0.9); }
       `}</style>
 
-      <main className="min-h-screen bg-mugen-black pt-28 pb-16">
-        <div className="container mx-auto max-w-7xl px-4 md:px-8">
+      <main className="min-h-screen bg-mugen-black pb-16 pt-24 sm:pt-28">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
 
           {/* ── Header ── */}
-          <div className="mb-10">
-            <h1 className="font-cinzel text-3xl font-bold text-white md:text-4xl">Shop</h1>
-            <p className="mt-2 max-w-2xl font-sans text-white/70">
+          <div className="mb-8 sm:mb-10">
+            <h1 className="font-cinzel text-2xl font-bold text-white sm:text-3xl md:text-4xl">Shop</h1>
+            <p className="mt-2 max-w-2xl font-sans text-sm text-white/70 sm:text-base">
               Premium anime posters, action figures, limited edition collectibles, and custom creations — Infinity Castle inspired curation.
             </p>
           </div>
 
-          {/* ── Filter tabs ── */}
-          <div className="mb-8 flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => {
-              const href = c.id ? `/shop?category=${c.id}` : '/shop'
-              const active = activeCategory === c.id
-              return (
-                <Link
-                  key={c.id || 'all'}
-                  href={href}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${active
-                    ? 'bg-mugen-crimson/80 text-white ring-1 ring-mugen-glow/40'
-                    : 'bg-white/5 text-white/80 hover:bg-white/10'
-                    }`}
-                >
-                  {c.label}
-                </Link>
-              )
-            })}
+          {/* ── Filter tabs — horizontal scroll on narrow viewports, no page overflow ── */}
+          <div className="relative -mx-4 mb-8 sm:mx-0">
+            <div className="scrollbar-hide flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 sm:flex-wrap sm:overflow-visible sm:px-0">
+              {CATEGORIES.map((c) => {
+                const href = c.id ? `/shop?category=${c.id}` : '/shop'
+                const active = activeCategory === c.id
+                return (
+                  <Link
+                    key={c.id || 'all'}
+                    href={href}
+                    scroll={false}
+                    className={`snap-start whitespace-nowrap rounded-full px-4 py-3 text-sm font-semibold transition-colors touch-manipulation active:scale-[0.98] sm:min-h-0 sm:py-2 ${active
+                      ? 'bg-mugen-crimson/80 text-white ring-1 ring-mugen-glow/40'
+                      : 'bg-white/5 text-white/80 hover:bg-white/10'
+                      }`}
+                  >
+                    {c.label}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
 
           {/* ── DB error ── */}
@@ -303,109 +324,7 @@ export default async function ShopPage({
               aria-labelledby="pp-heading"
               className="animate-slide-down"
             >
-              {/* Header */}
-              <div className="mb-6 flex flex-wrap items-center gap-3">
-                <h2 id="pp-heading" className="font-cinzel text-2xl font-bold text-white md:text-3xl">
-                  Personalized Posters
-                </h2>
-                <span className="badge-new rounded-full bg-mugen-crimson/70 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-white ring-1 ring-mugen-crimson/40">
-                  New
-                </span>
-              </div>
-              <p className="mb-10 max-w-2xl text-sm text-white/60 font-sans leading-relaxed">
-                Get a poster printed exactly to your preferred size — sharp, gallery-quality output on premium archival paper. Pick your size below and place your order.
-              </p>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Left: size options */}
-                <div className="glass rounded-2xl p-6 flex flex-col gap-6">
-                  <div>
-                    <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">
-                      Choose a Size
-                    </h3>
-                    <div className="flex flex-col gap-3">
-                      {POSTER_SIZES.map((s) => (
-                        <button
-                          key={s.id}
-                          id={`psize-${s.id}`}
-                          type="button"
-                          className="size-pill flex items-center justify-between rounded-xl bg-white/3 px-5 py-3.5"
-                          aria-label={`Select poster size ${s.label}`}
-                        >
-                          <span className="font-semibold text-sm text-white/85">{s.label}</span>
-                          <span className="text-xs text-white/40">{s.sub}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/8 bg-white/3 px-5 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-white/35 mb-2">Print Specs</p>
-                    <ul className="flex flex-col gap-1.5 text-xs text-white/55">
-                      {[
-                        '200 gsm archival matte paper',
-                        'Fade-resistant pigment inks',
-                        'Satin or glossy finish (on request)',
-                        'Colour-calibrated print process',
-                      ].map((s) => (
-                        <li key={s} className="flex items-center gap-2">
-                          <span className="h-1 w-1 flex-shrink-0 rounded-full bg-mugen-crimson/60" />
-                          {s}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Right: price + CTA */}
-                <div className="flex flex-col gap-4">
-                  <div className="glass rounded-2xl p-6 flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-white/40">Estimated Price</span>
-                    <span className="font-cinzel text-4xl font-bold text-white/20 tracking-wide">— —</span>
-                    <p className="text-xs text-white/35">Select a size above to see pricing.</p>
-                  </div>
-
-                  <div className="glass rounded-2xl p-5 flex flex-col gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-white/40">What's Included</span>
-                    <ul className="flex flex-col gap-2 text-sm text-white/70">
-                      {[
-                        'Premium archival print',
-                        'Rigid protective tube packaging',
-                        'Ready-to-frame mounting edges',
-                        'Tracked shipping',
-                      ].map((item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-mugen-crimson/70" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="glass rounded-2xl p-5 flex flex-col gap-3">
-                    <label htmlFor="pp-instructions" className="text-xs font-semibold uppercase tracking-widest text-white/40">
-                      Special Instructions <span className="normal-case font-normal text-white/25">(optional)</span>
-                    </label>
-                    <textarea
-                      id="pp-instructions"
-                      rows={3}
-                      placeholder="e.g. glossy finish, rolled or flat, preferred colours…"
-                      className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-mugen-crimson/50 focus:ring-1 focus:ring-mugen-crimson/30"
-                    />
-                  </div>
-
-                  <button
-                    id="pp-order-btn"
-                    type="button"
-                    disabled
-                    className="mt-auto w-full rounded-xl bg-mugen-crimson/30 px-8 py-3.5 font-cinzel text-sm font-bold uppercase tracking-widest text-white opacity-50 cursor-not-allowed transition"
-                    aria-label="Add personalized poster to cart"
-                  >
-                    Add to Cart
-                  </button>
-                  <p className="text-center text-xs text-white/30">Select a size to enable checkout</p>
-                </div>
-              </div>
+              <PersonalizedPosterUpload />
             </section>
           )}
 

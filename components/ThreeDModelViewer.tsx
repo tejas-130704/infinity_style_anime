@@ -5,50 +5,19 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { Box, Center, Html, OrbitControls, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { cn } from '@/lib/utils'
+import { resolveCatalogGlbFilename } from '@/lib/premium-assets-policy'
 import { SectionTitle } from './SectionTitle'
 
-/** Matches GLB files in public/assests/models */
+/** Character ids — GLB bytes are served only via /api/premium/catalog-glb/[id] (auth + rate limit). */
 const characters = [
-  {
-    id: 'beast-titan',
-    name: 'Beast Titan',
-    model: '/assests/models/beast_titan_hip_hop_dancing.glb',
-  },
-  {
-    id: 'gojo',
-    name: 'Satoru Gojo',
-    model: '/assests/models/gojo.glb',
-  },
-  {
-    id: 'luffy',
-    name: 'Monkey D. Luffy',
-    model: '/assests/models/monkey_d._luffy.glb',
-  },
-  {
-    id: 'naruto',
-    name: 'Naruto Uzumaki',
-    model: '/assests/models/naruto_sage.glb',
-  },
-  {
-    id: 'sasuke',
-    name: 'Sasuke Uchiha',
-    model: '/assests/models/saske_sharingan.glb',
-  },
-  {
-    id: 'sukuna',
-    name: 'Ryomen Sukuna',
-    model: '/assests/models/sukuna.glb',
-  },
-  {
-    id: 'yuji',
-    name: 'Yuji Itadori',
-    model: '/assests/models/yuji_itadori__season_3_design.glb',
-  },
-  {
-    id: 'zoro',
-    name: 'Roronoa Zoro',
-    model: '/assests/models/zoro.glb',
-  },
+  { id: 'beast-titan', name: 'Beast Titan' },
+  { id: 'gojo', name: 'Satoru Gojo' },
+  { id: 'luffy', name: 'Monkey D. Luffy' },
+  { id: 'naruto', name: 'Naruto Uzumaki' },
+  { id: 'sasuke', name: 'Sasuke Uchiha' },
+  { id: 'sukuna', name: 'Ryomen Sukuna' },
+  { id: 'yuji', name: 'Yuji Itadori' },
+  { id: 'zoro', name: 'Roronoa Zoro' },
 ] as const
 
 /** Gojo / Sasuke GLBs frame tighter after fit — start the camera farther back. */
@@ -65,34 +34,71 @@ function getCameraDistance(characterId: string): number {
   return extra ?? base
 }
 
-type ModelAvailability = 'checking' | 'yes' | 'no'
+type GlbLoadState = 'loading' | 'auth' | 'missing' | 'ready'
 
-/** R3F error boundaries do not catch useGLTF load failures; probe the URL first. */
-function useModelFileAvailability(url: string): ModelAvailability {
-  const [state, setState] = useState<ModelAvailability>('checking')
+/** Fetch GLB via protected API → blob URL (no direct /public URL in DOM). */
+function useProtectedCatalogGlb(characterId: string) {
+  const [state, setState] = useState<{ load: GlbLoadState; blobUrl: string | null }>({
+    load: 'loading',
+    blobUrl: null,
+  })
 
   useEffect(() => {
-    let cancelled = false
-    setState('checking')
+    let blobUrl: string | null = null
+    const ac = new AbortController()
+    setState({ load: 'loading', blobUrl: null })
 
     ;(async () => {
       try {
-        let res = await fetch(url, { method: 'HEAD' })
-        if (res.status === 405 || res.status === 501) {
-          res = await fetch(url)
+        const url = `/api/premium/catalog-glb/${characterId}`
+        const res = await fetch(url, { credentials: 'include', signal: ac.signal })
+        if (res.status === 401) {
+          setState({ load: 'auth', blobUrl: null })
+          return
         }
-        if (!cancelled) setState(res.ok ? 'yes' : 'no')
+        if (!res.ok) {
+          setState({ load: 'missing', blobUrl: null })
+          return
+        }
+        const b = await res.blob()
+        blobUrl = URL.createObjectURL(b)
+        setState({ load: 'ready', blobUrl })
       } catch {
-        if (!cancelled) setState('no')
+        if (!ac.signal.aborted) setState({ load: 'missing', blobUrl: null })
       }
     })()
 
     return () => {
-      cancelled = true
+      ac.abort()
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
-  }, [url])
+  }, [characterId])
 
   return state
+}
+
+function PlaceholderSignIn({ displayName }: { displayName: string }) {
+  return (
+    <Center bottom>
+      <group>
+        <Box args={[1.2, 2.2, 0.7]} rotation={[0, 0.4, 0]}>
+          <meshStandardMaterial color="#4a3a6b" metalness={0.25} roughness={0.5} />
+        </Box>
+        <Html position={[0, 0, 0.6]} center>
+          <div className="pointer-events-auto w-[min(260px,72vw)] rounded-lg border border-mugen-gold/35 bg-mugen-black/92 px-3 py-2.5 text-center font-sans text-[11px] leading-snug text-white/90 shadow-lg">
+            <p className="mb-1 font-semibold text-mugen-gold">{displayName}</p>
+            <p className="mb-2 text-white/75">Sign in to load protected 3D catalog previews.</p>
+            <a
+              href="/login"
+              className="inline-block rounded-md bg-mugen-gold/90 px-3 py-1.5 text-[11px] font-bold text-mugen-black"
+            >
+              Sign in
+            </a>
+          </div>
+        </Html>
+      </group>
+    </Center>
+  )
 }
 
 function PlaceholderModel({
@@ -113,7 +119,7 @@ function PlaceholderModel({
           <p className="mb-1 text-mugen-gold">{displayName}</p>
           <p>
             Missing <span className="font-mono text-mugen-white/90">{fileName}</span>. Add GLB files under{' '}
-            <span className="text-mugen-gold">public/assests/models/</span>.
+            <span className="text-mugen-gold">premium-assets/glb/</span> (or set PREMIUM_GLB_ROOT).
           </p>
         </div>
       </Html>
@@ -217,23 +223,56 @@ function LoadedGltfModel({ modelPath, characterId }: LoadedGltfModelProps) {
 }
 
 function ModelViewer({
-  modelPath,
   fileName,
   characterName,
   characterId,
 }: {
-  modelPath: string
   fileName: string
   characterName: string
   characterId: string
 }) {
-  const availability = useModelFileAvailability(modelPath)
+  const { load, blobUrl } = useProtectedCatalogGlb(characterId)
+
+  if (load === 'auth') {
+    return (
+      <Canvas
+        camera={{ position: [0, 0.35, 4.25], fov: 42, near: 0.1, far: 100 }}
+        className="w-full h-full bg-gradient-to-b from-mugen-dark/50 to-mugen-black"
+        gl={{ antialias: true, alpha: false }}
+      >
+        <ambientLight intensity={0.65} />
+        <PlaceholderSignIn displayName={characterName} />
+      </Canvas>
+    )
+  }
+
+  if (load === 'missing' || load === 'loading' || !blobUrl) {
+    return (
+      <Canvas
+        camera={{ position: [0, 0.35, 4.25], fov: 42, near: 0.1, far: 100 }}
+        className="w-full h-full bg-gradient-to-b from-mugen-dark/50 to-mugen-black"
+        key={load}
+        gl={{ antialias: true, alpha: false }}
+      >
+        <ambientLight intensity={0.65} />
+        {load === 'missing' ? (
+          <PlaceholderModel fileName={fileName} displayName={characterName} />
+        ) : (
+          <Center>
+            <Html center>
+              <p className="font-sans text-sm text-white/50">Loading model…</p>
+            </Html>
+          </Center>
+        )}
+      </Canvas>
+    )
+  }
 
   return (
     <Canvas
       camera={{ position: [0, 0.35, 4.25], fov: 42, near: 0.1, far: 100 }}
       className="w-full h-full bg-gradient-to-b from-mugen-dark/50 to-mugen-black"
-      key={modelPath}
+      key={blobUrl}
       gl={{ antialias: true, alpha: false }}
     >
       <ambientLight intensity={0.65} />
@@ -241,14 +280,9 @@ function ModelViewer({
       <directionalLight position={[-4, 4, -4]} intensity={0.35} color="#e5dcc8" />
       <pointLight position={[0, 6, 2]} intensity={0.45} color="#863841" />
 
-      {availability === 'no' && (
-        <PlaceholderModel fileName={fileName} displayName={characterName} />
-      )}
-      {availability === 'yes' && (
-        <Suspense fallback={null}>
-          <LoadedGltfModel modelPath={modelPath} characterId={characterId} />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <LoadedGltfModel modelPath={blobUrl} characterId={characterId} />
+      </Suspense>
 
       <OrbitControls
         makeDefault
@@ -380,14 +414,8 @@ export function ThreeDModelViewer() {
             >
               <ModelViewer
                 characterId={selectedCharacter}
-                modelPath={
-                  characters.find((c) => c.id === selectedCharacter)?.model ?? ''
-                }
                 fileName={
-                  characters
-                    .find((c) => c.id === selectedCharacter)
-                    ?.model.split('/')
-                    .pop() ?? ''
+                  resolveCatalogGlbFilename(selectedCharacter) ?? 'model.glb'
                 }
                 characterName={
                   characters.find((c) => c.id === selectedCharacter)?.name ??

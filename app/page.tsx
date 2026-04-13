@@ -1,13 +1,28 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import { LoadingAnimation } from '@/components/LoadingAnimation'
 import { HeroSection } from '@/components/HeroSection'
-import { ValueProposition } from '@/components/ValueProposition'
-import { PosterShowcase } from '@/components/PosterShowcase'
-// import { ThreeDModelViewer } from '@/components/ThreeDModelViewer'  // "Meet the Characters" — commented out
-// import { CustomOrderForm } from '@/components/CustomOrderForm'       // "Design Your Legend"  — removed
-import { FeaturedCollections } from '@/components/FeaturedCollections'
+
+const LoadingAnimation = dynamic(
+  () => import('@/components/LoadingAnimation').then((m) => ({ default: m.LoadingAnimation })),
+  { ssr: false, loading: () => <div className="min-h-screen bg-black" aria-hidden /> },
+)
+
+const ValueProposition = dynamic(
+  () => import('@/components/ValueProposition').then((m) => ({ default: m.ValueProposition })),
+  { loading: () => <section className="min-h-[40vh] bg-black" aria-hidden /> },
+)
+
+const PosterShowcase = dynamic(
+  () => import('@/components/PosterShowcase').then((m) => ({ default: m.PosterShowcase })),
+  { loading: () => <section className="min-h-[30vh] bg-black" aria-hidden /> },
+)
+
+const FeaturedCollections = dynamic(
+  () => import('@/components/FeaturedCollections').then((m) => ({ default: m.FeaturedCollections })),
+  { loading: () => <section className="min-h-[24vh] bg-black" aria-hidden /> },
+)
 
 export default function Home() {
   const [loadingAnimationShown, setLoadingAnimationShown] = useState(false)

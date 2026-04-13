@@ -363,7 +363,82 @@ svg.tear-clip {
   * {
     @apply border-border outline-ring/50;
   }
+  /* Hint native form controls (select, scrollbars) to use dark-themed system UI where supported */
+  html {
+    color-scheme: dark;
+  }
   body {
     @apply text-white;
+  }
+  /*
+   * Native <select> dropdown lists (especially Windows / Chrome): without this, options often
+   * render with a white panel and light text. Force mugen-black + light text on options.
+   */
+  select {
+    accent-color: #863841;
+  }
+  select option,
+  select optgroup {
+    background-color: #22201f;
+    color: #f5f5f5;
+  }
+  select option:hover,
+  select option:focus,
+  select option:active {
+    background-color: #2a2624;
+    color: #ffffff;
+  }
+  select option:checked {
+    background: linear-gradient(#863841, #863841);
+    color: #ffffff;
+  }
+  /* Touch: avoid 300ms delay on tap; keep pinch-zoom for accessibility */
+  button,
+  a,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+}
+
+/* Fluid page gutter — mobile-first; matches max-w-7xl containers */
+@layer utilities {
+  .page-gutter {
+    @apply mx-auto w-full max-w-[min(100%-1.5rem,80rem)] px-4 sm:px-6 lg:px-8;
+  }
+  .tap-target {
+    @apply inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /**
+   * Animated underline on hover/focus (navbar, footer text links).
+   * Use with .link-underline-active when the route matches.
+   */
+  .link-underline-anim {
+    @apply relative w-fit max-w-full pb-0.5;
+  }
+  .link-underline-anim::after {
+    content: '';
+    @apply pointer-events-none absolute bottom-0 left-0 h-0.5 w-0 rounded-full transition-[width] duration-300 ease-out;
+    /* mugen-gold #c6a86c — avoid @apply with custom color/opacity (Tailwind v4 + @apply limitation) */
+    background-color: rgb(198 168 108 / 0.9);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .link-underline-anim:hover::after {
+      @apply w-full;
+    }
+  }
+  .link-underline-anim:focus-visible::after {
+    @apply w-full;
+  }
+  .link-underline-anim.link-underline-active::after {
+    @apply w-full;
+    background-color: #c6a86c;
   }
 }

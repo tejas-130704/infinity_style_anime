@@ -12,19 +12,55 @@ export interface GalleryImage {
 interface ImageGalleryProps {
   images: GalleryImage[]
   productName: string
+  /** When set, loads via /api/premium/product-image (session + rate limit). Omit for user-generated flows. */
+  productId?: string
+  useProtectedImages?: boolean
   /** Rendered below main image — pass "Click to see 3D view" button */
   footer?: React.ReactNode
 }
 
 const THUMB_VISIBLE = 5   // max thumbnails visible before scroll
 
-export function ImageGallery({ images, productName, footer }: ImageGalleryProps) {
+/** Same-origin public files — must not go through /api/premium/product-image (that proxy only supports http(s) upstream). */
+function isLocalPublicAsset(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('/api/')
+}
+
+export function ImageGallery({
+  images,
+  productName,
+  productId,
+  useProtectedImages,
+  footer,
+}: ImageGalleryProps) {
   const [active, setActive] = useState(0)
   const [thumbOffset, setThumbOffset] = useState(0)
   const [zoomed, setZoomed] = useState(false)
 
   const list = images.length ? images : [{ url: '/placeholder.svg', alt: productName }]
   const total = list.length
+
+  const displayUrl = useCallback(
+    (idx: number, raw: string) => {
+      if (raw === '/placeholder.svg') return raw
+      if (useProtectedImages && productId && !isLocalPublicAsset(raw)) {
+        return `/api/premium/product-image/${productId}/${idx}`
+      }
+      return raw
+    },
+    [useProtectedImages, productId],
+  )
+
+  const usesPremiumProxy = useCallback(
+    (idx: number, raw: string) =>
+      Boolean(
+        useProtectedImages &&
+          productId &&
+          raw !== '/placeholder.svg' &&
+          !isLocalPublicAsset(raw),
+      ),
+    [useProtectedImages, productId],
+  )
 
   const prev = useCallback(
     () => setActive(i => (i - 1 + total) % total),
@@ -79,12 +115,16 @@ export function ImageGallery({ images, productName, footer }: ImageGalleryProps)
                   }`}
                 >
                   <Image
-                    src={img.url}
+                    src={displayUrl(idx, img.url)}
                     alt={img.alt ?? `${productName} view ${idx + 1}`}
                     fill
+                    draggable={false}
                     className="object-cover"
                     sizes="70px"
-                    unoptimized={img.url.startsWith('http')}
+                    unoptimized={
+                      img.url.startsWith('http') ||
+                      displayUrl(idx, img.url).startsWith('/api/premium/')
+                    }
                   />
                   {/* Active overlay shimmer */}
                   {isActive && (
@@ -120,19 +160,29 @@ export function ImageGallery({ images, productName, footer }: ImageGalleryProps)
         {/* Main image frame */}
         <div
           className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/8
-                     bg-gradient-to-b from-mugen-dark/80 to-mugen-black group cursor-zoom-in"
+                     bg-gradient-to-b from-mugen-dark/80 to-mugen-black group cursor-zoom-in select-none"
           onClick={() => setZoomed(v => !v)}
         >
           <Image
-            src={list[active].url}
+            src={displayUrl(active, list[active].url)}
             alt={list[active].alt ?? productName}
             fill
+            draggable={false}
             className={`object-contain p-5 transition-all duration-500 ease-out
                         ${zoomed ? 'scale-125' : 'scale-100 group-hover:scale-105'}`}
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
-            unoptimized={list[active].url.startsWith('http')}
+            unoptimized={
+              list[active].url.startsWith('http') ||
+              displayUrl(active, list[active].url).startsWith('/api/premium/')
+            }
           />
+          {usesPremiumProxy(active, list[active].url) && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[1] bg-[repeating-linear-gradient(135deg,transparent,transparent_12px,rgba(255,255,255,0.03)_12px,rgba(255,255,255,0.03)_24px)] mix-blend-overlay"
+            />
+          )}
 
           {/* Zoom hint */}
           <span

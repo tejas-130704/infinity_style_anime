@@ -2,13 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingBag } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, BarChart2, Users, TicketPercent } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LINKS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
+  { href: '/admin/users', label: 'Users', icon: Users },
 ] as const
 
 export function AdminNav() {

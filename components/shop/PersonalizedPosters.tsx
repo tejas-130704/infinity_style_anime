@@ -1,6 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useRef, useCallback } from 'react'
+import { shouldOptimizeImageSrc } from '@/lib/image-allowlist'
 
 /* ─────────────────────────────────────────────
    CONSTANTS
@@ -170,17 +172,33 @@ export default function PersonalizedPosters() {
                     <span className="ml-2 text-white/40">{selectedSize.dims}</span>
                   </div>
                 )}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imageSrc}
-                  alt="Poster preview"
-                  className="max-h-[340px] max-w-full object-contain rounded-xl"
-                  style={selectedSize ? {
-                    aspectRatio: `${selectedSize.widthCm} / ${selectedSize.heightCm}`,
-                    objectFit: 'cover',
-                    maxHeight: 320,
-                  } : undefined}
-                />
+                {imageSrc.startsWith('blob:') || imageSrc.startsWith('data:') ? (
+                  <img
+                    src={imageSrc}
+                    alt="Poster preview"
+                    className="max-h-[340px] max-w-full object-contain rounded-xl"
+                    style={selectedSize ? {
+                      aspectRatio: `${selectedSize.widthCm} / ${selectedSize.heightCm}`,
+                      objectFit: 'cover',
+                      maxHeight: 320,
+                    } : undefined}
+                  />
+                ) : (
+                  <Image
+                    src={imageSrc}
+                    alt="Poster preview"
+                    width={800}
+                    height={640}
+                    className="max-h-[340px] max-w-full object-contain rounded-xl"
+                    style={selectedSize ? {
+                      aspectRatio: `${selectedSize.widthCm} / ${selectedSize.heightCm}`,
+                      objectFit: 'cover',
+                      maxHeight: 320,
+                    } : undefined}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    unoptimized={!shouldOptimizeImageSrc(imageSrc)}
+                  />
+                )}
                 {/* Replace hint overlay */}
                 <button
                   onClick={() => fileInputRef.current?.click()}

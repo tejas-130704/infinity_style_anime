@@ -53,9 +53,8 @@ const PosterCard = ({ src, alt, index }: PosterCardProps) => {
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="perspective-1200 flex-shrink-0"
+      className="perspective-1200 w-[min(78vw,280px)] shrink-0 snap-center sm:w-64 md:w-72"
       style={{
-        width: '280px',
         transform: `
           perspective(1200px)
           rotateX(${tilt.x}deg)
@@ -65,10 +64,9 @@ const PosterCard = ({ src, alt, index }: PosterCardProps) => {
       }}
     >
       <div
-        className="group relative w-full h-96 rounded-xl overflow-hidden bg-mugen-black
-          transition-[box-shadow,transform] duration-300 ease-out
+        className="group relative h-[min(52vw,22rem)] w-full overflow-hidden rounded-xl bg-mugen-black transition-[box-shadow,transform] duration-300 ease-out sm:h-96
           hover:shadow-[0_0_36px_rgba(255,211,77,0.42),0_0_72px_rgba(202,164,0,0.12)]
-          hover:-translate-y-0.5"
+          md:hover:-translate-y-0.5 active:scale-[0.99] md:active:scale-100"
         data-aos="zoom-in-up"
         data-aos-duration="750"
         data-aos-delay={index * 60}
@@ -78,8 +76,8 @@ const PosterCard = ({ src, alt, index }: PosterCardProps) => {
             src={src}
             alt={alt}
             fill
-            sizes="280px"
-            className="object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+            sizes="(max-width: 640px) 78vw, (max-width: 1024px) 256px, 288px"
+            className="object-contain object-center transition-transform duration-500 ease-out md:group-hover:scale-[1.02]"
           />
         </div>
       </div>
@@ -97,9 +95,9 @@ export function PosterShowcase() {
   const handleScroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return
 
-    const scrollAmount = 300
+    const amount = Math.min(320, scrollContainerRef.current.clientWidth * 0.85)
     scrollContainerRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      left: direction === 'left' ? -amount : amount,
       behavior: 'smooth',
     })
   }
@@ -109,46 +107,48 @@ export function PosterShowcase() {
     if (!container) return
 
     const updateScrollButtons = () => {
-      setCanScrollLeft(container.scrollLeft > 0)
+      setCanScrollLeft(container.scrollLeft > 4)
       setCanScrollRight(
         container.scrollLeft < container.scrollWidth - container.clientWidth - 10
       )
     }
 
-    container.addEventListener('scroll', updateScrollButtons)
+    container.addEventListener('scroll', updateScrollButtons, { passive: true })
     updateScrollButtons()
+    window.addEventListener('resize', updateScrollButtons)
 
-    return () => container.removeEventListener('scroll', updateScrollButtons)
+    return () => {
+      container.removeEventListener('scroll', updateScrollButtons)
+      window.removeEventListener('resize', updateScrollButtons)
+    }
   }, [posters.length])
 
   return (
-    <section className="relative py-20 md:py-28 lg:py-36 bg-gradient-to-b from-mugen-black to-mugen-dark">
-      <div className="container mx-auto px-4 md:px-8">
+    <section className="relative overflow-x-hidden bg-gradient-to-b from-mugen-black to-mugen-dark py-16 md:py-28 lg:py-36">
+      <div className="page-gutter">
         {/* Section Header */}
         <div
-          className="mb-12 md:mb-16"
+          className="mb-10 md:mb-16"
           data-aos="fade-up"
           data-aos-duration="800"
         >
           <SectionTitle
             title="Official Drops"
             japaneseSubtitle="公式コレクション"
-            subtitle="Limited edition posters and collectibles"
+            subtitle="Limited edition posters and collectibles — swipe or use arrows to explore"
           />
         </div>
 
-        {/* Poster Carousel */}
+        {/* Premium poster rail */}
         <div
-          className="relative group"
+          className="relative -mx-4 sm:mx-0"
           data-aos="fade-up"
           data-aos-duration="850"
           data-aos-delay="100"
         >
-          {/* Scroll Container */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-6 overflow-x-auto scroll-smooth pb-4 md:pb-6 [scrollbar-width:none] [-ms-overflow-style:none]"
-            style={{ scrollBehavior: 'smooth' }}
+            className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4 pl-4 pr-4 sm:gap-6 sm:pl-0 sm:pr-0 md:pb-6"
           >
             {posters.map((poster, index) => (
               <PosterCard
@@ -160,29 +160,24 @@ export function PosterShowcase() {
             ))}
           </div>
 
-          {/* Scroll Buttons */}
           {canScrollLeft && (
             <button
               type="button"
               onClick={() => handleScroll('left')}
-              className="absolute left-0 top-1/3 -translate-y-1/2 z-20 bg-mugen-black/80 text-mugen-gold p-3 rounded-full cursor-pointer
-                transition-all duration-300 ease-out glow-gold
-                hover:bg-mugen-black hover:scale-110 hover:shadow-[0_0_26px_rgba(255,211,77,0.55)] active:scale-95"
+              className="tap-target absolute left-1 top-[38%] z-20 hidden -translate-y-1/2 rounded-full border border-white/10 bg-mugen-black/85 text-mugen-gold shadow-lg backdrop-blur-md transition-all duration-300 ease-out glow-gold hover:bg-mugen-black hover:shadow-[0_0_26px_rgba(255,211,77,0.55)] active:scale-95 sm:left-0 sm:flex"
               aria-label="Scroll left"
             >
-              <ChevronLeft size={24} />
+              <ChevronLeft className="h-6 w-6" aria-hidden />
             </button>
           )}
           {canScrollRight && (
             <button
               type="button"
               onClick={() => handleScroll('right')}
-              className="absolute right-0 top-1/3 -translate-y-1/2 z-20 bg-mugen-black/80 text-mugen-gold p-3 rounded-full cursor-pointer
-                transition-all duration-300 ease-out glow-gold
-                hover:bg-mugen-black hover:scale-110 hover:shadow-[0_0_26px_rgba(255,211,77,0.55)] active:scale-95"
+              className="tap-target absolute right-1 top-[38%] z-20 hidden -translate-y-1/2 rounded-full border border-white/10 bg-mugen-black/85 text-mugen-gold shadow-lg backdrop-blur-md transition-all duration-300 ease-out glow-gold hover:bg-mugen-black hover:shadow-[0_0_26px_rgba(255,211,77,0.55)] active:scale-95 sm:right-0 sm:flex"
               aria-label="Scroll right"
             >
-              <ChevronRight size={24} />
+              <ChevronRight className="h-6 w-6" aria-hidden />
             </button>
           )}
         </div>

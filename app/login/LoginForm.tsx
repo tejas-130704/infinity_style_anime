@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GlowButton } from '@/components/GlowButton'
+import { GoogleLogin } from '@/components/GoogleLogin'
+import { toast } from 'react-toastify'
 
 export function LoginForm() {
   const router = useRouter()
@@ -14,6 +16,13 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const authError = searchParams.get('error')
+    if (authError === 'account_exists') {
+      toast.error('Account already exists, please sign in.')
+    }
+  }, [searchParams])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -30,14 +39,7 @@ export function LoginForm() {
     router.refresh()
   }
 
-  async function signInGoogle() {
-    const supabase = createClient()
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
-    })
-  }
+
 
   return (
     <main className="min-h-screen bg-mugen-black pt-28 pb-20">
@@ -83,13 +85,10 @@ export function LoginForm() {
           </GlowButton>
         </form>
 
-        <button
-          type="button"
-          onClick={signInGoogle}
-          className="mt-4 w-full rounded-lg border border-white/20 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10"
-        >
-          Continue with Google
-        </button>
+        <div className="mt-4">
+          <p className="mb-2 text-center text-xs text-white/40">or</p>
+          <GoogleLogin mode="signin" />
+        </div>
 
         <p className="mt-6 text-center text-sm text-white/60">
           No account?{' '}

@@ -2,8 +2,31 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getCartContext } from '@/lib/cart/get-cart-context'
 import { ProductDetailClient, type ProductFull } from '@/components/shop/ProductDetailClient'
+import { SimilarProducts } from '@/components/shop/SimilarProducts'
+import { normalizeProductPriceFields } from '@/lib/pricing-utils'
 import type { Metadata } from 'next'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/** Always read fresh prices/MRP from DB after admin edits (avoid stale ISR cache). */
+export const dynamic = 'force-dynamic'
+
+/** Route param is either a UUID (`/product/uuid`) or a slug (`/product/my-item-slug`). */
+function isUuidParam(s: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
+}
+
+async function getProductByRouteSegment(
+  supabase: SupabaseClient,
+  segment: string
+) {
+  if (isUuidParam(segment)) {
+    return supabase.from('products').select('*').eq('id', segment).maybeSingle()
+  }
+  return supabase.from('products').select('*').eq('slug', segment).maybeSingle()
+}
 
 /* ── Dynamic SEO metadata ──────────────────────────────────────────── */
 export async function generateMetadata({
@@ -11,9 +34,9 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  const { id } = await params
+  const { id: segment } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('products').select('name, description').eq('id', id).maybeSingle()
+  const { data } = await getProductByRouteSegment(supabase, segment)
   return {
     title: data?.name ? `${data.name} | Mugen Drip` : 'Product | Mugen Drip',
     description: data?.description ?? 'Premium anime collectibles — action figures & posters.',
@@ -26,16 +49,31 @@ export default async function ProductPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
+  const { id: segment } = await params
   const supabase = await createClient()
+  const ctx = await getCartContext()
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { data: product, error } = await getProductByRouteSegment(supabase, segment)
 
   if (error || !product) notFound()
+
+  const productId = product.id as string
+
+  const { price, original_price } = normalizeProductPriceFields(product as { price: unknown; original_price?: unknown; mrp?: unknown })
+  const productForClient = { ...product, price, original_price }
+
+  const admin = createAdminClient()
+  const [{ count: likeCount }, { data: likedRow }] = await Promise.all([
+    admin.from('product_likes').select('*', { count: 'exact', head: true }).eq('product_id', productId),
+    ctx
+      ? ctx.db
+          .from('product_likes')
+          .select('product_id')
+          .eq('product_id', productId)
+          .eq('user_id', ctx.userId)
+          .maybeSingle()
+      : Promise.resolve({ data: null } as { data: { product_id: string } | null }),
+  ])
 
   return (
     <>
@@ -90,32 +128,22 @@ export default async function ProductPage({
 
           {/* ── Product detail grid ── */}
           <div className="animate-fade-up">
-            <ProductDetailClient product={product as ProductFull} />
+            <ProductDetailClient
+              product={
+                {
+                  ...(productForClient as object),
+                  __liked: !!likedRow,
+                  __likeCount: likeCount ?? 0,
+                } as ProductFull
+              }
+            />
           </div>
 
           {/* ── Divider ── */}
           <hr className="my-16 border-none h-px bg-gradient-to-r from-transparent via-mugen-magenta/20 to-transparent" />
 
-          {/* ── "You might also like" placeholder ── */}
-          <section aria-labelledby="related-heading">
-            <h2
-              id="related-heading"
-              className="mb-6 font-cinzel text-xl font-bold text-white"
-            >
-              You Might Also Like
-            </h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] animate-pulse rounded-xl border border-white/6 bg-white/3"
-                />
-              ))}
-            </div>
-            <p className="mt-4 text-center text-xs text-white/20">
-              Related products coming soon
-            </p>
-          </section>
+          {/* ── Similar Products ── */}
+          <SimilarProducts productId={productId} />
         </div>
       </main>
     </>
