@@ -27,11 +27,6 @@ export async function GET(
   const og = assertPremiumOrigin(request)
   if (og) return og
 
-  const user = await getSessionUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { productId } = await ctx.params
   if (!productId) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 })

@@ -48,11 +48,6 @@ export async function GET(
   const og = assertPremiumOrigin(request)
   if (og) return og
 
-  const user = await getSessionUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { productId, index: indexStr } = await ctx.params
   const index = parseInt(indexStr, 10)
   if (!productId || !Number.isFinite(index) || index < 0) {
