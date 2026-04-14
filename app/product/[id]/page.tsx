@@ -23,9 +23,19 @@ async function getProductByRouteSegment(
   segment: string
 ) {
   if (isUuidParam(segment)) {
-    return supabase.from('products').select('*').eq('id', segment).maybeSingle()
+    return supabase
+      .from('products')
+      .select('*')
+      .eq('id', segment)
+      .eq('is_public', true) // hidden products are inaccessible to public users
+      .maybeSingle()
   }
-  return supabase.from('products').select('*').eq('slug', segment).maybeSingle()
+  return supabase
+    .from('products')
+    .select('*')
+    .eq('slug', segment)
+    .eq('is_public', true) // hidden products are inaccessible to public users
+    .maybeSingle()
 }
 
 /* ── Dynamic SEO metadata ──────────────────────────────────────────── */

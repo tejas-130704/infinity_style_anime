@@ -55,7 +55,7 @@ const cards = [
     border: 'rgba(6,182,212,0.4)',
     tagBg: '#06B6D4',
     tagText: '#fff',
-    gradFrom: 'rgba(8,145,178,0.3)',
+    gradFrom: 'rgba(15, 154, 189, 0.42)',
   },
 ]
 

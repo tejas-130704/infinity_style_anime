@@ -78,11 +78,11 @@ export function ImageGallery({
   const scrollDown = () => setThumbOffset(o => Math.min(total - THUMB_VISIBLE, o + 1))
 
   return (
-    <div className="flex gap-3 w-full select-none">
+    <div className="flex flex-col md:flex-row gap-3 w-full select-none">
 
-      {/* ── Vertical thumbnail strip ── */}
+      {/* ── Vertical thumbnail strip (Desktop Only) ── */}
       {total > 1 && (
-        <div className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[70px]">
+        <div className="hidden md:flex flex-col items-center gap-1.5 flex-shrink-0 w-[70px]">
 
           {/* Scroll up */}
           <button
@@ -177,12 +177,7 @@ export function ImageGallery({
               displayUrl(active, list[active].url).startsWith('/api/premium/')
             }
           />
-          {usesPremiumProxy(active, list[active].url) && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-[1] bg-[repeating-linear-gradient(135deg,transparent,transparent_12px,rgba(255,255,255,0.03)_12px,rgba(255,255,255,0.03)_24px)] mix-blend-overlay"
-            />
-          )}
+
 
           {/* Zoom hint */}
           <span
@@ -255,6 +250,45 @@ export function ImageGallery({
           </div>
         )}
       </div>
+
+      {/* ── Horizontal thumbnail strip (Mobile Only) ── */}
+      {total > 1 && (
+        <div className="flex md:hidden w-full overflow-x-auto no-scrollbar snap-x snap-mandatory gap-2.5 py-1 px-1">
+          {list.map((img, idx) => {
+            const isActive = active === idx
+            return (
+              <button
+                key={idx}
+                id={`m-thumb-${idx}`}
+                onClick={() => setActive(idx)}
+                aria-label={`View image ${idx + 1}`}
+                className={`relative h-[64px] w-[64px] flex-shrink-0 overflow-hidden rounded-lg border-2
+                            snap-center transition-all duration-200
+                            ${isActive
+                  ? 'border-mugen-magenta shadow-[0_0_14px_rgba(184,77,122,0.5)] scale-[1.03]'
+                  : 'border-white/10 opacity-70 hover:opacity-100 hover:scale-[1.02]'
+                }`}
+              >
+                <Image
+                  src={displayUrl(idx, img.url)}
+                  alt={img.alt ?? `${productName} view ${idx + 1}`}
+                  fill
+                  draggable={false}
+                  className="object-cover"
+                  sizes="64px"
+                  unoptimized={
+                    img.url.startsWith('http') ||
+                    displayUrl(idx, img.url).startsWith('/api/premium/')
+                  }
+                />
+                {isActive && (
+                  <span className="pointer-events-none absolute inset-0 bg-mugen-magenta/10 rounded-md" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

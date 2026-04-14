@@ -11,9 +11,12 @@ export interface Product {
   slug: string | null;
   stock_quantity: number;
   is_featured: boolean;
+  /** Controls public visibility. false = hidden from shop/public pages. */
+  is_public: boolean;
   weight_grams: number;
   dimensions_cm: string | null;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface ProductImage {

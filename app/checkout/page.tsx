@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { GlowButton } from '@/components/GlowButton';
 import { useUserMe } from '@/hooks/useUserMe';
 import { PriceBreakdown } from '@/components/checkout/PriceBreakdown';
@@ -45,12 +45,21 @@ async function markOrderPaymentUnsuccessful(
 
 export default function CheckoutPageNew() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get('buyNow') === '1';
   const { user: meUser, isLoading: meLoading } = useUserMe();
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loadingCart, setLoadingCart] = useState(true);
+  const [buyNowProduct, setBuyNowProduct] = useState<{
+    id: string;
+    name: string;
+    price: number;
+    image_url: string | null;
+    slug: string | null;
+  } | null>(null);
   
   // Form state
   const [form, setForm] = useState({
@@ -91,6 +100,41 @@ export default function CheckoutPageNew() {
       email: meUser.email ?? '',
     }));
 
+    // ── Buy Now flow: read from sessionStorage instead of DB cart ──
+    if (isBuyNow) {
+      try {
+        const raw = sessionStorage.getItem('buyNowProduct');
+        if (raw) {
+          const p = JSON.parse(raw) as {
+            id: string;
+            name: string;
+            price: number;
+            image_url: string | null;
+            slug: string | null;
+          };
+          setBuyNowProduct(p);
+          setCartItems([{
+            id: `buy-now-${p.id}`,
+            quantity: 1,
+            products: {
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              image_url: p.image_url,
+              slug: p.slug,
+            },
+          }]);
+          sessionStorage.removeItem('buyNowProduct');
+        }
+      } catch (e) {
+        console.error('[buyNow] Failed to read product from sessionStorage', e);
+      }
+      setLoadingCart(false);
+      setReady(true);
+      return;
+    }
+
+    // ── Normal flow: load cart from API ──
     (async () => {
       try {
         const res = await fetch('/api/cart');
@@ -105,7 +149,7 @@ export default function CheckoutPageNew() {
       }
       setReady(true);
     })();
-  }, [meLoading, meUser, router]);
+  }, [meLoading, meUser, router, isBuyNow]);
 
   useEffect(() => {
     if (cartItems.length === 0) {
@@ -192,6 +236,20 @@ export default function CheckoutPageNew() {
     setSubmitting(true);
 
     try {
+      // ── Buy Now: silently add the product to DB cart so /api/checkout can read it ──
+      if (isBuyNow && buyNowProduct) {
+        const addRes = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: buyNowProduct.id, quantity: 1 }),
+        });
+        if (!addRes.ok) {
+          const j = await addRes.json().catch(() => ({})) as { error?: string };
+          setError(j.error || 'Could not process Buy Now — please try again');
+          return;
+        }
+      }
+
       // Validate cart
       if (cartItems.length === 0) {
         setError('Your cart is empty');
@@ -476,11 +534,41 @@ export default function CheckoutPageNew() {
             />
 
             {/* Place Order Button */}
+            <style>{`
+              .place-order-btn {
+                position: relative;
+                overflow: hidden;
+                background: #2a2624;
+                border: 2px solid white;
+                color: white;
+                transition: box-shadow 0.3s ease, color 0.3s ease;
+              }
+              .place-order-btn::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: #863841;
+                transform: scaleX(0);
+                transform-origin: left center;
+                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 0;
+              }
+              .place-order-btn:hover:not(:disabled)::before {
+                transform: scaleX(1);
+              }
+              .place-order-btn:hover:not(:disabled) {
+                box-shadow: 0 0 24px 4px rgba(134, 56, 65, 0.55);
+              }
+              .place-order-btn > * {
+                position: relative;
+                z-index: 1;
+              }
+            `}</style>
             <button
               type="submit"
               onClick={onSubmit}
               disabled={submitting}
-              className="w-full rounded-lg bg-mugen-crimson px-6 py-4 font-bold text-white shadow-lg shadow-mugen-crimson/30 transition-all hover:bg-mugen-crimson/90 hover:shadow-mugen-crimson/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="place-order-btn w-full rounded-lg px-6 py-4 font-bold shadow-lg shadow-mugen-crimson/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

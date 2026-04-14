@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import {
   Star, Box, ShoppingCart, Heart, Share2,
-  Truck, ShieldCheck, Award, Package, Ruler
+  Truck, ShieldCheck, Award, Package, Ruler, Zap
 } from 'lucide-react'
 import { ImageGallery, type GalleryImage } from '@/components/shop/ImageGallery'
 import { AddToCartButton } from '@/components/shop/AddToCartButton'
@@ -124,6 +125,7 @@ const SIZE_META: Record<string, { dims: string; price_offset: number }> = {
 
 /* ── Main component ────────────────────────────────────────────────────── */
 export function ProductDetailClient({ product }: { product: ProductFull }) {
+  const router = useRouter()
   const [liked, setLiked] = useState(!!(product as any).__liked)
   const [likeCount, setLikeCount] = useState<number>((product as any).__likeCount ?? 0)
   const [likeBusy, setLikeBusy] = useState(false)
@@ -253,6 +255,23 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
           background: rgba(184,77,122,0.12);
           box-shadow: 0 0 18px rgba(184,77,122,0.3);
         }
+        /* ── Buy Now: left-to-right fill animation ── */
+        .btn-buy-now { position: relative; isolation: isolate; }
+        .btn-buy-now::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, #FFD34D 0%, #ed8936 100%);
+          transform: scaleX(0);
+          transform-origin: left center;
+          transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: -1;
+          border-radius: inherit;
+        }
+        .btn-buy-now:hover::before,
+        .btn-buy-now:focus-visible::before { transform: scaleX(1); }
+        .btn-buy-now:hover,
+        .btn-buy-now:focus-visible { color: #22201f; border-color: transparent; }
       `}</style>
 
       <div className="grid gap-8 lg:gap-12 lg:grid-cols-[1fr_1fr] xl:grid-cols-[500px_1fr]">
@@ -399,7 +418,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
                                    ring-offset-mugen-dark transition-transform"
                         style={{ backgroundColor: swatch(c) }}
                       />
-                      <span className="font-sans text-[11px] font-semibold text-white/70">{c}</span>
+                      {/* <span className="font-sans text-[11px] font-semibold text-white/70">{c}</span>
                       <span className="color-card-price font-cinzel text-xs font-bold text-white/90">
                         {fmt(variantPrice)}
                       </span>
@@ -407,7 +426,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
                         <span className="color-card-price font-sans text-[9px] text-white/30 line-through">
                           {fmt(variantOriginal)}
                         </span>
-                      )}
+                      )} */}
                       {isActive && (
                         <span
                           className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center
@@ -542,8 +561,9 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
           </div>
 
           {/* ── CTA buttons ── */}
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <div className="flex-1">
+          <div className="flex items-start gap-2.5">
+            {/* Primary actions: Add to Cart + Buy Now stacked */}
+            <div className="flex flex-1 flex-col gap-3 min-w-0">
               <AddToCartButton
                 productId={product.id}
                 productSlug={product.slug}
@@ -552,61 +572,94 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
                 requiresVariant={requiresVariant}
                 variantLabel={variantLabel}
               />
+
+              {/* Buy Now */}
+              <button
+                id="btn-buy-now"
+                aria-label="Buy now — go directly to checkout"
+                className="btn-buy-now flex h-12 w-full items-center justify-center gap-2.5
+                           overflow-hidden rounded-xl border border-mugen-gold/60
+                           font-cinzel text-sm font-bold uppercase tracking-widest text-mugen-gold
+                           transition-colors duration-300 select-none
+                           hover:shadow-[0_0_28px_rgba(255,211,77,0.35)]
+                           active:scale-[0.99] focus-visible:outline-none
+                           focus-visible:ring-2 focus-visible:ring-mugen-gold/60 cursor-pointer"
+                onClick={() => {
+                  sessionStorage.setItem(
+                    'buyNowProduct',
+                    JSON.stringify({
+                      id: product.id,
+                      name: product.name,
+                      price: displayPrice,
+                      image_url: product.image_url,
+                      slug: product.slug,
+                    })
+                  )
+                  router.push('/checkout?buyNow=1')
+                }}
+              >
+                <Zap className="h-4 w-4 cursor-pointer" aria-hidden />
+                <span>Buy Now</span>
+              </button>
             </div>
-            <button
-              id="btn-wishlist"
-              aria-label="Save to wishlist"
-              disabled={likeBusy}
-              onClick={async () => {
-                setLikeBusy(true)
-                try {
-                  const res = await fetch('/api/likes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productId: product.id }),
-                  })
-                  const raw = await res.text()
-                  let j: { liked?: boolean; likeCount?: number; error?: string } = {}
+
+            {/* Secondary icon actions */}
+            <div className="flex flex-col gap-2">
+              <button
+                id="btn-wishlist"
+                aria-label="Save to wishlist"
+                disabled={likeBusy}
+                onClick={async () => {
+                  setLikeBusy(true)
                   try {
-                    j = raw ? JSON.parse(raw) : {}
-                  } catch {
-                    j = {}
-                  }
-                  if (!res.ok) {
-                    if (res.status === 401) {
-                      window.location.href = `/login?next=${encodeURIComponent(productDetailPath(product))}`
-                      return
+                    const res = await fetch('/api/likes', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ productId: product.id }),
+                    })
+                    const raw = await res.text()
+                    let j: { liked?: boolean; likeCount?: number; error?: string } = {}
+                    try {
+                      j = raw ? JSON.parse(raw) : {}
+                    } catch {
+                      j = {}
                     }
-                    throw new Error(j.error || 'Like failed')
+                    if (!res.ok) {
+                      if (res.status === 401) {
+                        window.location.href = `/login?next=${encodeURIComponent(productDetailPath(product))}`
+                        return
+                      }
+                      throw new Error(j.error || 'Like failed')
+                    }
+                    const nextLiked = typeof j.liked === 'boolean' ? j.liked : !liked
+                    setLiked(nextLiked)
+                    if (typeof j.likeCount === 'number') setLikeCount(j.likeCount)
+                  } catch (e) {
+                    console.error('[likes]', e)
+                  } finally {
+                    setLikeBusy(false)
                   }
-                  const nextLiked = typeof j.liked === 'boolean' ? j.liked : !liked
-                  setLiked(nextLiked)
-                  if (typeof j.likeCount === 'number') setLikeCount(j.likeCount)
-                } catch (e) {
-                  console.error('[likes]', e)
-                } finally {
-                  setLikeBusy(false)
-                }
-              }}
-              className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border transition-all
-                ${liked
-                  ? 'border-red-500/50 bg-red-500/15 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
-                  : 'border-white/10 bg-white/5 hover:border-red-400/40 hover:bg-red-500/10 hover:shadow-[0_0_16px_rgba(239,68,68,0.15)]'}`}
-            >
-              <Heart
-                className={`h-5 w-5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-white/40 hover:text-red-400'}`}
-              />
-            </button>
-            <button
-              id="btn-share"
-              aria-label="Share product"
-              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl
-                         border border-white/10 bg-white/5 text-white/40 transition-all
-                         hover:border-mugen-gold/40 hover:bg-mugen-gold/8 hover:text-mugen-gold
-                         hover:shadow-[0_0_16px_rgba(198,168,108,0.2)]"
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
+                }}
+                className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border transition-all
+                  ${liked
+                    ? 'border-red-500/50 bg-red-500/15 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
+                    : 'border-white/10 bg-white/5 hover:border-red-400/40 hover:bg-red-500/10 hover:shadow-[0_0_16px_rgba(239,68,68,0.15)]'}`}
+              >
+                <Heart
+                  className={`h-5 w-5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-white/40 hover:text-red-400'}`}
+                />
+              </button>
+              <button
+                id="btn-share"
+                aria-label="Share product"
+                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl
+                           border border-white/10 bg-white/5 text-white/40 transition-all
+                           hover:border-mugen-gold/40 hover:bg-mugen-gold/8 hover:text-mugen-gold
+                           hover:shadow-[0_0_16px_rgba(198,168,108,0.2)]"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
         </div>

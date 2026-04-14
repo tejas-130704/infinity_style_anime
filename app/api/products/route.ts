@@ -19,9 +19,17 @@ export async function GET(request: Request) {
   const category = searchParams.get('category')
 
   const session = await getSessionUser()
-  const supabase =
-    session?.role === 'admin' ? createAdminClient() : await createClient()
+  const isAdmin = session?.role === 'admin'
+  const supabase = isAdmin ? createAdminClient() : await createClient()
+
   let q = supabase.from('products').select('*').order('created_at', { ascending: false })
+
+  // Defense-in-depth: even though RLS handles this on the DB side,
+  // we also filter explicitly so the intent is clear in code.
+  if (!isAdmin) {
+    q = q.eq('is_public', true)
+  }
+
   if (category && VALID_CATEGORIES.includes(category)) {
     q = q.eq('category', category)
   }

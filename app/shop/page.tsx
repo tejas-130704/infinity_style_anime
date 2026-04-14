@@ -82,7 +82,11 @@ export default async function ShopPage({
   let error: unknown = null
 
   if (!isCustomSection) {
-    let q = supabase.from('products').select('*').order('created_at', { ascending: false })
+    let q = supabase
+      .from('products')
+      .select('*')
+      .eq('is_public', true)   // defense-in-depth: RLS also enforces this
+      .order('created_at', { ascending: false })
     if (activeCategory && (DB_CATS as readonly string[]).includes(activeCategory)) {
       q = q.eq('category', activeCategory)
     }

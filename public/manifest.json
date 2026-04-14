@@ -1,0 +1,20 @@
+{
+  "name": "Infinity Style - Anime Merchandise",
+  "short_name": "InfinityStyle",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#22201f",
+  "theme_color": "#22201f",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

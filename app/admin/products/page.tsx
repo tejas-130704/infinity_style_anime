@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { shouldOptimizeImageSrc } from '@/lib/image-allowlist'
 import {
   Plus, X, Upload, Trash2, Pencil, AlertCircle, CheckCircle2,
-  Image as ImageIcon, Box, Palette, Ruler, Package, Tag
+  Image as ImageIcon, Box, Palette, Ruler, Package, Tag,
+  Eye, EyeOff,
 } from 'lucide-react'
 import type { ProductRow } from '@/components/shop/ProductCard'
 import { getRetailPricing, pickMrpRaw, resolveRetailMrp } from '@/lib/pricing-utils'
@@ -126,7 +127,9 @@ export default function AdminProductsPage() {
   const [globalErr, setGlobalErr] = useState<string | null>(null)
   const [saving,  setSaving]  = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId,  setEditingId]  = useState<string | null>(null)
+  /** ID of the product whose visibility is currently being toggled */
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   /* ── Basic info ── */
   const [name,     setName]     = useState('')
@@ -333,6 +336,39 @@ export default function AdminProductsPage() {
     if (!res.ok) { const j = await res.json().catch(() => ({})); setGlobalErr(j.error || 'Delete failed'); return }
     if (editingId === id) reset()
     await load()
+  }
+
+  /* ── Toggle visibility ── */
+  async function toggleVisibility(id: string, currentIsPublic: boolean) {
+    const next = !currentIsPublic
+    // Optimistic UI: flip immediately
+    setProducts(prev =>
+      prev.map(p => p.id === id ? { ...p, is_public: next } as typeof p : p)
+    )
+    setTogglingId(id)
+    try {
+      const res = await fetch(`/api/products/${id}/visibility`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_public: next }),
+      })
+      if (!res.ok) {
+        // Revert on failure
+        setProducts(prev =>
+          prev.map(p => p.id === id ? { ...p, is_public: currentIsPublic } as typeof p : p)
+        )
+        const j = await res.json().catch(() => ({}))
+        setGlobalErr(j.error || 'Visibility update failed')
+      }
+    } catch {
+      // Revert on network error
+      setProducts(prev =>
+        prev.map(p => p.id === id ? { ...p, is_public: currentIsPublic } as typeof p : p)
+      )
+      setGlobalErr('Network error — could not update visibility')
+    } finally {
+      setTogglingId(null)
+    }
   }
 
   /* ════════════════════════════════════════════════════════════════════
@@ -730,6 +766,7 @@ export default function AdminProductsPage() {
                   <th className="px-4 py-3.5 font-semibold text-white/60">Type</th>
                   <th className="px-4 py-3.5 font-semibold text-white/60">Price</th>
                   <th className="px-4 py-3.5 font-semibold text-white/60">MRP</th>
+                  <th className="px-4 py-3.5 font-semibold text-white/60">Visibility</th>
                   <th className="px-4 py-3.5 font-semibold text-white/60">Actions</th>
                 </tr>
               </thead>
@@ -781,6 +818,65 @@ export default function AdminProductsPage() {
                           <span className="text-white/25">—</span>
                         )}
                       </td>
+                      {/* ── Visibility toggle cell ── */}
+                      <td className="px-4 py-3.5">
+                        {(() => {
+                          const isPublic = (ext as Record<string, unknown>).is_public !== false
+                          const isToggling = togglingId === p.id
+                          return (
+                            <div className="flex items-center gap-2">
+                              {/* Badge: Public / Hidden */}
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${
+                                  isPublic
+                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                                    : 'border-white/10 bg-white/5 text-white/35'
+                                }`}
+                              >
+                                {isPublic ? 'Public' : 'Hidden'}
+                              </span>
+                              {/* Toggle switch */}
+                              <button
+                                type="button"
+                                id={`vis-toggle-${p.id}`}
+                                disabled={isToggling}
+                                onClick={() => toggleVisibility(p.id, isPublic)}
+                                aria-label={isPublic ? 'Hide product from shop' : 'Make product public'}
+                                title={isPublic ? 'Click to hide' : 'Click to publish'}
+                                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center
+                                  rounded-full border-2 transition-colors duration-200 ease-in-out
+                                  focus:outline-none focus-visible:ring-2 focus-visible:ring-mugen-magenta
+                                  disabled:opacity-50 disabled:cursor-not-allowed
+                                  ${ isPublic
+                                    ? 'border-emerald-500/50 bg-emerald-500/30'
+                                    : 'border-white/15 bg-white/10'
+                                  }`}
+                              >
+                                {isToggling ? (
+                                  <span className="absolute inset-0 flex items-center justify-center">
+                                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                  </span>
+                                ) : (
+                                  <span
+                                    aria-hidden
+                                    className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full
+                                      shadow transition duration-200 ease-in-out
+                                      ${ isPublic
+                                        ? 'translate-x-3.5 bg-emerald-400'
+                                        : 'translate-x-0 bg-white/30'
+                                      }`}
+                                  />
+                                )}
+                              </button>
+                              {/* Eye icon hint */}
+                              {isPublic
+                                ? <Eye className="h-3.5 w-3.5 text-emerald-400/50" />
+                                : <EyeOff className="h-3.5 w-3.5 text-white/20" />}
+                            </div>
+                          )
+                        })()}
+                      </td>
+                      {/* ── Actions cell ── */}
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <button

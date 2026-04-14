@@ -1,89 +1,81 @@
 import Link from 'next/link'
-import { Mail, Phone, MapPin, Github, Twitter, Instagram, Infinity as InfinityMark } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, MapPin, Instagram } from 'lucide-react'
 
 const QUICK_LINKS = [
-  { label: 'Shop',                  href: '/shop' },
-  { label: 'Posters',               href: '/shop?category=posters' },
-  { label: 'Action Figures',        href: '/shop?category=action_figures' },
-  { label: 'Limited Edition',       href: '/shop?category=limited_edition' },
-  { label: 'Custom Action Figure',  href: '/shop?category=custom_action_figure' },
-  { label: 'Account',               href: '/account' },
+  { label: 'Shop', href: '/shop' },
+  { label: 'Posters', href: '/shop?category=posters' },
+  { label: 'Action Figures', href: '/shop?category=action_figures' },
+  { label: 'Limited Edition', href: '/shop?category=limited_edition' },
+  { label: 'Custom Action Figure', href: '/shop?category=custom_action_figure' },
+  { label: 'Account', href: '/account' },
 ] as const
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer
-  className="relative bg-mugen-black border-t border-[rgba(255,255,255,0.3)]"
-  data-aos="fade-up"
-  data-aos-duration="850"
->
+    <footer className="relative bg-mugen-black border-t border-[rgba(255,255,255,0.3)]">
+
       {/* Top Glow */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-mugen-crimson to-transparent" />
 
       <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
-        {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          {/* Company Info */}
+
+        {/* MAIN GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12 text-center md:text-left">
+
+          {/* COMPANY */}
           <div>
-            <div className="mb-4 flex items-center gap-3">
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-mugen-crimson via-mugen-magenta/80 to-mugen-gold shadow-md ring-1 ring-white/15"
-                aria-hidden
-              >
-                <InfinityMark className="h-5 w-5 text-white" strokeWidth={2.4} />
+            <div className="mb-4 flex flex-col items-center md:flex-row gap-3">
+              <Image
+                src="/assests/logo/logo.png"
+                alt="Infinity Style Logo"
+                width={48}
+                height={48}
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg object-contain"
+              />
+              <div className="flex flex-col leading-tight items-center md:items-start">
+                <span className="font-cinzel text-lg font-bold text-white">
+                  Infinity Style
+                </span>
+                <span className="text-xs text-white/55">
+                  by 3DKalakaar
+                </span>
               </div>
-              <span className="font-cinzel text-lg font-bold tracking-tight text-white">Infinity Style</span>
             </div>
-            <p className="font-sans text-sm font-medium leading-relaxed mb-6 text-white">
+
+            <p className="text-sm text-white mb-6 text-center md:text-left">
               Premium anime merchandise with exclusive drops and custom designs. Bringing legends to life.
             </p>
-            <div className="flex flex-wrap gap-3">
+
+            {/* Instagram Button */}
+            <div className="flex justify-center md:justify-start">
               <a
-                href="#"
-                className="tap-target rounded-full bg-mugen-gray text-mugen-glow glow-gold
-                  transition-all duration-300 ease-out
-                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
-                  active:scale-95 md:hover:scale-110 md:hover:-translate-y-0.5"
-                aria-label="Twitter"
+                href="https://www.instagram.com/3dkalakaar.in"
+                className="relative overflow-hidden inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-white/30 text-white group"
               >
-                <Twitter className="h-[18px] w-[18px]" aria-hidden />
-              </a>
-              <a
-                href="#"
-                className="tap-target rounded-full bg-mugen-gray text-mugen-glow glow-gold
-                  transition-all duration-300 ease-out
-                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
-                  active:scale-95 md:hover:scale-110 md:hover:-translate-y-0.5"
-                aria-label="Instagram"
-              >
-                <Instagram className="h-[18px] w-[18px]" aria-hidden />
-              </a>
-              <a
-                href="#"
-                className="tap-target rounded-full bg-mugen-gray text-mugen-glow glow-gold
-                  transition-all duration-300 ease-out
-                  hover:bg-mugen-glow-deep hover:text-mugen-white hover:shadow-[0_0_22px_rgba(255,211,77,0.55)]
-                  active:scale-95 md:hover:scale-110 md:hover:-translate-y-0.5"
-                aria-label="GitHub"
-              >
-                <Github className="h-[18px] w-[18px]" aria-hidden />
+                <span className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-[#feda75] via-[#fa7e1e] to-[#d62976] transition-transform duration-500 group-hover:translate-x-0" />
+                <span className="relative z-10 flex items-center gap-2">
+                  <Instagram className="h-5 w-5" />
+                  <span className="text-sm font-medium">Instagram</span>
+                </span>
               </a>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* QUICK LINKS */}
           <div>
             <h3 className="font-cinzel text-lg font-bold mb-6 text-white">
               Quick Links
             </h3>
-            <ul className="space-y-1">
+
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2 justify-items-center md:flex md:flex-col md:items-start md:space-y-1">
               {QUICK_LINKS.map((link) => (
-                <li key={link.href}>
+                <li key={link.href} className="md:text-left">
                   <Link
                     href={link.href}
-                    className="link-underline-anim block min-h-11 py-2.5 font-sans text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0 sm:py-0"
+                    className="link-underline-anim inline-block text-sm text-white transition-colors duration-200 hover:text-mugen-glow"
                   >
                     {link.label}
                   </Link>
@@ -92,57 +84,55 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
+
+
+          {/* SUPPORT */}
           <div>
             <h3 className="font-cinzel text-lg font-bold mb-6 text-white">
               Support
             </h3>
-            <ul className="space-y-1">
+
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2 justify-items-center md:flex md:flex-col md:items-start md:space-y-1">
               {[
                 { label: 'About Us', href: '/about' },
-                { label: 'Contact',  href: '/about#contact-heading' },
-                { label: 'FAQ',      href: '/about#faq-heading' },
+                { label: 'Contact', href: '/about#contact-heading' },
+                { label: 'FAQ', href: '/about#faq-heading' },
               ].map((link) => (
-                <li key={link.label}>
-                  <a
+                <li key={link.label} className="md:text-left bg-transparent">
+                  <Link
                     href={link.href}
-                    className="link-underline-anim block min-h-11 py-2.5 font-sans text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0 sm:py-0"
+                    className="link-underline-anim inline-block text-sm text-white transition-colors duration-200 hover:text-mugen-glow"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* CONTACT */}
           <div>
             <h3 className="font-cinzel text-lg font-bold mb-6 text-white">
               Contact
             </h3>
-            <div className="space-y-4">
+
+            <div className="space-y-4 flex flex-col items-center md:items-start text-center md:text-left">
+
               <a
-                href="mailto:support@mugendrip.com"
-                className="group flex items-start gap-3 text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow"
+                href="mailto:infinity.style.anime@gmail.com"
+                className="flex items-center gap-3"
               >
-                <Mail size={18} className="mt-0.5 shrink-0 opacity-80 group-hover:opacity-100" aria-hidden />
-                <span className="link-underline-anim">support@mugendrip.com</span>
+                <Mail size={18} />
+                <span>infinity.style.anime@gmail.com</span>
               </a>
-              <a
-                href="tel:+919876543210"
-                className="group flex items-start gap-3 text-sm font-medium text-white transition-colors duration-200 hover:text-mugen-glow"
-              >
-                <Phone size={18} className="mt-0.5 shrink-0 opacity-80 group-hover:opacity-100" aria-hidden />
-                <span className="link-underline-anim">+91 (98765) 43210</span>
-              </a>
-              <div className="flex items-start gap-3 text-sm font-medium text-white">
-                <MapPin size={18} className="flex-shrink-0 mt-0.5" />
+
+              <div className="flex items-center gap-3">
+                <MapPin size={18} />
                 <span>
-                  Mumbai, India
-                  <br />
-                  400001
+                  Chh. Sambhaji Nagar, Maharashtra, India
                 </span>
               </div>
+
             </div>
           </div>
         </div>
@@ -154,7 +144,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Copyright */}
           <p className="font-sans text-sm font-medium text-center text-white md:text-left">
-            © {currentYear} Infinity Style. All rights reserved. Crafted with passion by anime enthusiasts.
+            © {currentYear} Infinity Style. All rights reserved by 3DKalakaar. Crafted with passion by anime enthusiasts.
           </p>
 
           {/* Links */}

@@ -18,6 +18,8 @@ export type ProductRow = {
   original_price?: number | null
   rating?: number | null
   rating_count?: number | null
+  /** Visibility flag — false means hidden from public shop */
+  is_public?: boolean
 }
 
 function fmt(cents: number) {

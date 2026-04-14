@@ -13,6 +13,18 @@
   font-style: normal;
 }
 
+/*
+ * Ninja Naruto — loaded from local font file for branding elements.
+ * Use class `font-naruto` where needed.
+ */
+@font-face {
+  font-family: 'NinjaNaruto';
+  src: url('/fonts/ninja-naruto.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* MUGEN DRIP Custom Animations & Utilities */
 
 @supports (backdrop-filter: blur(1px)) {
@@ -72,7 +84,7 @@
 }
 
 /* Smooth Scroll + Global Scrollbar */
-html {
+html, body {
   scroll-behavior: smooth;
   overflow-x: hidden;
 
@@ -362,6 +374,7 @@ svg.tear-clip {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
   }
   /* Hint native form controls (select, scrollbars) to use dark-themed system UI where supported */
   html {
@@ -369,6 +382,10 @@ svg.tear-clip {
   }
   body {
     @apply text-white;
+    touch-action: manipulation;
+  }
+  input, textarea, select {
+    font-size: 16px;
   }
   /*
    * Native <select> dropdown lists (especially Windows / Chrome): without this, options often
@@ -392,7 +409,7 @@ svg.tear-clip {
     background: linear-gradient(#863841, #863841);
     color: #ffffff;
   }
-  /* Touch: avoid 300ms delay on tap; keep pinch-zoom for accessibility */
+  /* Touch: keep pinch-zoom for accessibility if wanted, but user requested touch-action: manipulation on body to disable double-tap */
   button,
   a,
   [role='button'] {
@@ -441,4 +458,13 @@ svg.tear-clip {
     @apply w-full;
     background-color: #c6a86c;
   }
+}
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

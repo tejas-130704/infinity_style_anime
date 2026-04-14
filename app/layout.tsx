@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer'
 import { LoaderProvider } from '@/context/LoaderContext'
 import { GlobalLoader } from '@/components/GlobalLoader'
 import { AppProviders } from '@/components/providers/AppProviders'
+import { MobileOptimizer } from '@/components/MobileOptimizer'
 import './globals.css'
 
 const cinzel = Cinzel_Decorative({
@@ -36,30 +37,34 @@ const bungee = Bungee({
 export const metadata: Metadata = {
   title: 'Infinity Style - Anime Merchandise',
   description: 'Exclusive anime merchandise drops with premium 3D models and custom orders',
+  manifest: '/manifest.json',
   generator: 'v0.app',
   icons: {
     icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
+      // Primary favicon — multi-resolution ICO (16, 32, 48 px)
+      { url: '/favicon.ico?v=3', sizes: 'any' },
+      // Explicit PNG sizes for modern browsers
+      { url: '/favicon-16x16.png?v=3', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png?v=3', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48x48.png?v=3', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-192x192.png?v=3', sizes: '192x192', type: 'image/png' },
+      // SVG fallback — scales perfectly at any resolution
+      { url: '/favicon.svg?v=3', type: 'image/svg+xml' },
     ],
-    apple: '/apple-icon.png',
+    // iOS home-screen icon (180×180)
+    apple: [{ url: '/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' }],
+    // Android / PWA
+    other: [
+      { rel: 'manifest-icon', url: '/favicon-512x512.png?v=3', sizes: '512x512', type: 'image/png' },
+    ],
   },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#22201f',
 }
 
@@ -79,6 +84,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AppProviders>
+          <MobileOptimizer />
           <LoaderProvider>
             <GlobalLoader>
               <AosProvider>

@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { useSession } from 'next-auth/react'
-import { Menu, X, Search, ShoppingCart, User, Infinity as InfinityMark } from 'lucide-react'
+import { Menu, X, ShoppingCart, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_LINKS = [
@@ -169,17 +170,24 @@ export function Navbar() {
         >
           <Link
             href="/"
-            className="flex min-h-12 min-w-0 shrink items-center gap-2 rounded-full py-1 pl-1 pr-2 -ml-1 sm:ml-0"
+            className="flex min-h-12 min-w-0 shrink items-center gap-2.5 rounded-full py-1 pl-1 pr-2 sm:gap-3"
           >
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-mugen-crimson via-mugen-magenta/80 to-mugen-gold shadow-md ring-1 ring-white/15"
-              aria-hidden
-            >
-              <InfinityMark className="h-5 w-5 text-white" strokeWidth={2.4} />
+            <Image
+              src="/assests/logo/logo.png"
+              alt="Infinity Style Logo"
+              width={44}
+              height={44}
+              className="h-9 w-9 sm:h-11 sm:w-11 shrink-0 rounded-lg object-contain"
+              priority
+            />
+            <div className="flex flex-col leading-[1.1] truncate">
+              <span className="font-cinzel text-[15px] sm:text-lg font-bold tracking-tight text-white">
+                Infinity Style
+              </span>
+              <span className="font-sans text-[9px] sm:text-xs font-medium text-white/60 tracking-wide mt-[2px]">
+                by 3DKalakaar
+              </span>
             </div>
-            <span className="font-cinzel text-lg font-bold tracking-tight text-white sm:text-xl hidden min-[400px]:inline truncate">
-              Infinity Style
-            </span>
           </Link>
 
           <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 lg:gap-5 xl:gap-6 lg:flex">
@@ -203,16 +211,8 @@ export function Navbar() {
 
           <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
             <Link
-              href="/shop"
-              className="tap-target rounded-xl text-white transition-all duration-200 hover:bg-white/10 hover:text-mugen-gold active:scale-95 sm:hover:scale-105"
-              aria-label="Search shop"
-            >
-              <Search className="h-5 w-5 sm:h-[22px] sm:w-[22px]" aria-hidden />
-            </Link>
-
-            <Link
               href="/cart"
-              className="tap-target relative rounded-xl text-white transition-all duration-200 hover:bg-white/10 hover:text-mugen-gold active:scale-95 sm:hover:scale-105"
+              className="tap-target hidden lg:flex relative rounded-xl text-white transition-all duration-200 hover:bg-white/10 hover:text-mugen-gold active:scale-95 sm:hover:scale-105"
               aria-label="Shopping cart"
             >
               <ShoppingCart className="h-5 w-5 sm:h-[22px] sm:w-[22px]" aria-hidden />
@@ -235,7 +235,7 @@ export function Navbar() {
               showSignIn && (
                 <Link
                   href="/login"
-                  className={`link-underline-anim hidden min-h-12 items-center px-2 text-sm font-semibold text-white/90 hover:text-mugen-gold sm:inline-flex ${
+                  className={`link-underline-anim hidden min-h-12 items-center px-2 text-sm font-semibold text-white/90 hover:text-mugen-gold lg:inline-flex ${
                     pathname.startsWith('/login') ? 'link-underline-active text-mugen-gold' : ''
                   }`}
                 >
@@ -281,7 +281,7 @@ export function Navbar() {
                     <Link
                       key={link.label}
                       href={link.href}
-                      className={`link-underline-anim rounded-xl px-4 py-3.5 font-sans text-base font-semibold transition-colors duration-200 active:bg-white/5 ${
+                      className={`link-underline-anim mx-auto text-center rounded-xl px-4 py-3.5 font-sans text-base font-semibold transition-colors duration-200 active:bg-white/5 ${
                         mActive
                           ? 'link-underline-active text-mugen-gold'
                           : 'text-mugen-white hover:text-mugen-gold'
@@ -292,29 +292,53 @@ export function Navbar() {
                     </Link>
                   )
                 })}
-                {loggedIn ? (
+
+                {/* Actions Section */}
+                <div className="mt-2 border-t border-white/15 pt-2">
                   <Link
-                    href="/account"
-                    className={`link-underline-anim mt-1 border-t border-mugen-gray/60 px-4 py-3.5 font-semibold text-mugen-gold ${
-                      pathname.startsWith('/account') ? 'link-underline-active' : ''
+                    href="/cart"
+                    className={`flex items-center justify-center gap-3 rounded-xl px-4 py-3.5 font-sans text-base font-semibold transition-colors duration-200 hover:text-mugen-gold active:bg-white/5 ${
+                      pathname === '/cart' ? 'text-mugen-gold' : 'text-mugen-white'
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Account
+                    <div className="relative">
+                      <ShoppingCart className="h-[22px] w-[22px]" aria-hidden />
+                      {cartCount > 0 && (
+                        <span className="absolute -right-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-mugen-crimson px-1 text-[10px] text-white">
+                          {cartCount > 99 ? '99+' : cartCount}
+                        </span>
+                      )}
+                    </div>
+                    <span>Cart</span>
                   </Link>
-                ) : (
-                  showSignIn && (
+
+                  {loggedIn ? (
                     <Link
-                      href="/login"
-                      className={`link-underline-anim mt-1 border-t border-mugen-gray/60 px-4 py-3.5 font-semibold text-mugen-gold ${
-                        pathname.startsWith('/login') ? 'link-underline-active' : ''
+                      href="/account"
+                      className={`flex items-center justify-center gap-3 rounded-xl px-4 py-3.5 font-sans text-base font-semibold transition-colors duration-200 hover:text-mugen-gold active:bg-white/5 ${
+                        pathname.startsWith('/account') ? 'text-mugen-gold' : 'text-mugen-white'
                       }`}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Sign in
+                      <User className="h-[22px] w-[22px]" aria-hidden />
+                      <span>Account</span>
                     </Link>
-                  )
-                )}
+                  ) : (
+                    showSignIn && (
+                      <Link
+                        href="/login"
+                        className={`flex items-center justify-center gap-3 rounded-xl px-4 py-3.5 font-sans text-base font-semibold transition-colors duration-200 hover:text-mugen-gold active:bg-white/5 ${
+                          pathname.startsWith('/login') ? 'text-mugen-gold' : 'text-mugen-white'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <User className="h-[22px] w-[22px]" aria-hidden />
+                        <span>Sign in</span>
+                      </Link>
+                    )
+                  )}
+                </div>
               </div>
             </div>
           </>

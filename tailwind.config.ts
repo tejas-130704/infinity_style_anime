@@ -30,6 +30,7 @@ const config: Config = {
         'cinzel': ['var(--font-cinzel)', 'serif'],
         'noto-jp': ['var(--font-noto-jp)', 'sans-serif'],
         'sans': ['var(--font-dm-sans)', 'sans-serif'],
+        'naruto': ['NinjaNaruto', 'sans-serif'],
       },
       backgroundImage: {
         'glass': 'rgba(255, 255, 255, 0.05)',

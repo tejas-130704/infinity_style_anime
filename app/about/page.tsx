@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Mail, MessageSquare, Sparkles, Target, Heart, Star, Send, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { BRAND_LOGO_PNG_SRC } from '@/lib/constants'
+// BRAND_LOGO_PNG_SRC removed — hero now uses Navbar logo identity
 
 /* ─── Visual Gallery Images ─── */
 const GALLERY = [
@@ -230,17 +230,28 @@ export default function AboutPage() {
               1. HERO SECTION
           ══════════════════════════════════════════ */}
           <section aria-labelledby="about-hero" className="hero-banner px-6 py-20 md:py-28 mb-0 text-center fade-up">
-            {/* Floating logo */}
-            <div className="mb-7 flex justify-center">
-              <div className="rounded-full border border-cyan-500/40 bg-gradient-to-br from-cyan-950/80 via-[#0f172a]/90 to-sky-950/80 p-4 shadow-[0_0_56px_rgba(6,182,212,0.45)] ring-1 ring-cyan-400/20">
+            {/* ── Brand identity — matches Navbar, scaled for hero ── */}
+            <div className="mb-8 flex flex-col items-center fade-up">
+              {/* Infinity logo image */}
+              <div>
                 <Image
-                  src={BRAND_LOGO_PNG_SRC}
-                  alt=""
-                  width={96}
-                  height={96}
-                  className="h-24 w-24 rounded-full object-contain object-center drop-shadow-[0_0_28px_rgba(6,182,212,0.45)] ring-1 ring-white/10"
+                  src="/assests/logo/logo.png"
+                  alt="Infinity Style Logo"
+                  width={120}
+                  height={120}
+                  className="h-20 w-20 rounded-xl object-contain sm:h-[100px] sm:w-[100px] md:h-[120px] md:w-[120px]"
                   priority
                 />
+              </div>
+
+              {/* Brand name text — exact Navbar styles, scaled up */}
+              <div className="flex flex-col items-center leading-tight">
+                <span className="font-cinzel text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
+                  Infinity Style
+                </span>
+                <span className="font-sans text-xs font-medium tracking-wide text-white/55 sm:text-sm">
+                  by 3DKalakaar
+                </span>
               </div>
             </div>
 

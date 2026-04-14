@@ -15,12 +15,15 @@ const VALID_CATEGORIES = [
 ]
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params
   const supabase = await createClient()
-  const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle()
+  let q = supabase.from('products').select('*').eq('id', id)
+  // Public users must not access hidden products even by direct URL
+  q = q.eq('is_public', true)
+  const { data, error } = await q.maybeSingle()
   if (error || !data) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
@@ -94,6 +97,11 @@ export async function PATCH(
   if (body.rating_count !== undefined) {
     updates.rating_count =
       body.rating_count === '' || body.rating_count == null ? null : parseInt(String(body.rating_count), 10)
+  }
+  // Visibility toggle — always honour explicit boolean from admin panel
+  if (body.is_public !== undefined) {
+    updates.is_public = Boolean(body.is_public)
+    updates.updated_at = new Date().toISOString()
   }
 
   const { data, error } = await supabase

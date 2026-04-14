@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     return supabase
       .from('products')
       .select(select)
+      .eq('is_public', true)   // never surface hidden products
       .eq('category', category)
       .neq('id', productId)
       .order(order.column, { ascending: order.ascending ?? false })
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
     const { data: pool, error: poolErr } = await supabase
       .from('products')
       .select(MINIMAL)
+      .eq('is_public', true)   // never surface hidden products in pool
       .order('id', { ascending: false })
       .limit(40)
 
