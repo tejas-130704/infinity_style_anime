@@ -160,6 +160,20 @@ export interface Profile {
   created_at: string;
 }
 
+// Buy Now / Direct Purchase
+/**
+ * Passed from the client when the checkout is initiated via "Buy Now"
+ * (i.e. NOT from the cart). Both the checkout and coupon-validate APIs
+ * accept this to bypass cart DB queries entirely.
+ */
+export interface DirectPurchaseItem {
+  /** Supabase product UUID */
+  product_id: string;
+  /** Price in paisa (as stored in the products table) */
+  price: number;
+  quantity: number;
+}
+
 // API Response Types
 export interface CouponValidationResponse {
   valid: boolean;

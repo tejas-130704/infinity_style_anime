@@ -202,6 +202,16 @@ svg.tear-clip {
   width: 100%;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+  will-change: transform;
+}
+
 /**
  * Seamless infinite scroll (right → left): two identical rows; −50% = one full cycle.
  */

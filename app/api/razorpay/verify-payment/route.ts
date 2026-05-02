@@ -81,6 +81,8 @@ export async function POST(request: NextRequest) {
           const to = addr?.email?.trim()
           if (to) {
             const result = await sendOrderInvoiceEmail(to, row)
+
+            // ── Customer invoice ───────────────────────────────────────────
             if (result.sent) {
               const { error: invErr } = await admin
                 .from('orders')
@@ -88,7 +90,12 @@ export async function POST(request: NextRequest) {
                 .eq('id', order_db_id)
               if (invErr) console.error('[invoice_email_sent_at]', invErr.message)
             } else if (!result.skipped) {
-              console.error('[invoice email]', result.error)
+              console.error('[invoice email] customer send failed:', result.error)
+            }
+
+            // ── Admin invoice ──────────────────────────────────────────────
+            if (!result.adminSent && result.adminError) {
+              console.error('[admin invoice email] failed:', result.adminError)
             }
           }
         }

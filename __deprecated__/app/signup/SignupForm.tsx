@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GlowButton } from '@/components/GlowButton'
 import { GoogleLogin } from '@/components/GoogleLogin'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 
 export function SignupForm() {
   const router = useRouter()

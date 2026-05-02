@@ -9,6 +9,7 @@ import { LoaderProvider } from '@/context/LoaderContext'
 import { GlobalLoader } from '@/components/GlobalLoader'
 import { AppProviders } from '@/components/providers/AppProviders'
 import { MobileOptimizer } from '@/components/MobileOptimizer'
+import OfferSystem from '@/components/OfferSystem'
 import './globals.css'
 
 const cinzel = Cinzel_Decorative({
@@ -92,6 +93,7 @@ export default function RootLayout({
                   <Navbar />
                 </Suspense>
                 {children}
+                <OfferSystem />
                 <Footer />
               </AosProvider>
             </GlobalLoader>

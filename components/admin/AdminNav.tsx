@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingBag, BarChart2, Users, TicketPercent } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, BarChart2, Users, TicketPercent, Gift } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LINKS = [
@@ -12,6 +12,8 @@ const LINKS = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/offers', label: 'Offers', icon: Gift },
+  { href: '/admin/spin-wheel', label: 'Spin Wheel', icon: Gift },
 ] as const
 
 export function AdminNav() {

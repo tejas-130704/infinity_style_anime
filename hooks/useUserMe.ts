@@ -46,13 +46,15 @@ export function useUserMe(): UseUserMeResult {
     return false
   }, [nextAuthStatus, nextAuthData?.user])
 
-  const fetchUser = useCallback(async () => {
+  const fetchUser = useCallback(async (isBackground = false) => {
     inflightRef.current?.abort()
     const controller = new AbortController()
     inflightRef.current = controller
     const gen = ++fetchGenRef.current
 
-    setIsLoading(true)
+    if (!isBackground) {
+      setIsLoading(true)
+    }
     setError(null)
 
     try {
@@ -81,9 +83,9 @@ export function useUserMe(): UseUserMeResult {
     }
   }, [])
 
-  const sync = useCallback(async () => {
+  const sync = useCallback(async (isBackground = false) => {
     if (nextAuthStatus === 'loading') {
-      setIsLoading(true)
+      if (!isBackground) setIsLoading(true)
       return
     }
 
@@ -96,12 +98,12 @@ export function useUserMe(): UseUserMeResult {
       return
     }
 
-    await fetchUser()
+    await fetchUser(isBackground)
   }, [nextAuthStatus, hasCredentials, fetchUser])
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback((isBackground = false) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => void sync(), 500)
+    debounceRef.current = setTimeout(() => void sync(isBackground), 500)
   }, [sync])
 
   useEffect(() => {
@@ -109,7 +111,7 @@ export function useUserMe(): UseUserMeResult {
   }, [sync])
 
   useEffect(() => {
-    const handleFocus = () => refresh()
+    const handleFocus = () => refresh(true) // Pass true for background refresh
     window.addEventListener('focus', handleFocus)
     return () => {
       window.removeEventListener('focus', handleFocus)

@@ -132,6 +132,8 @@ export function AccountDashboard({ user, orders, cartItems }: Props) {
     startTransition(async () => {
       const supabase = createClient()
       await supabase.auth.signOut()
+      localStorage.removeItem('spinReward')
+      localStorage.removeItem('spinUsed')
       toast.success('Signed out successfully')
       router.push('/')
       router.refresh()

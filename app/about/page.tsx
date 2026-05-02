@@ -9,22 +9,22 @@ import Image from 'next/image'
 /* ─── Visual Gallery Images ─── */
 const GALLERY = [
   {
-    src: 'https://m.media-amazon.com/images/I/91Gpp-eutgL._AC_UF894%2C1000_QL80_.jpg',
+    src: '/assests/about/posters.jpg',
     alt: 'Anime Poster – Premium archival quality',
     label: 'Anime Posters',
   },
   {
-    src: 'https://images.surferseo.art/e8b50a63-bda0-4a47-a59b-3680966a7fd7.jpeg',
+    src: '/assests/about/action_figure.jpg',
     alt: 'Anime Action Figure – Custom 3D printed',
     label: 'Action Figures',
   },
   {
-    src: 'https://cdn.dribbble.com/userupload/16031810/file/original-eb7cab412a0577a92824541a56233786.png?resize=400x0',
+    src: '/assests/about/limited_edition.jpg',
     alt: 'Anime Limited Edition Art – Exclusive drops',
     label: 'Limited Edition',
   },
   {
-    src: 'https://cdn.dribbble.com/userupload/34791234/file/original-04b5e1d7096629f0aaf33b42e96673a5.png?format=webp&resize=400x300&vertical=center',
+    src: '/assests/about/collectibles.jpg',
     alt: 'Anime Collectible Design – Unique merch',
     label: 'Collectibles',
   },

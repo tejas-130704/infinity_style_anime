@@ -95,9 +95,9 @@ export function ProductShowcase() {
                   flex gap-4 overflow-x-auto
                   snap-x snap-mandatory scroll-smooth
                   no-scrollbar
-                  align-center justify-center
-                  pt-4
+                  pt-4 px-[5%]
                 "
+                style={{ scrollPaddingInline: '5%' }}
               >
                 {products.map((product) => (
                   <div

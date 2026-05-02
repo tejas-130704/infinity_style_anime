@@ -153,7 +153,6 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     is_active: body.is_active !== false,
     first_order_only: Boolean(body.first_order_only),
     apply_to_all,
-    applicable_products: null as string[] | null,
   }
 
   const { error: upErr } = await supabase.from('coupons').update(row).eq('id', id)

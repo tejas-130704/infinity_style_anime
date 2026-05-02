@@ -74,10 +74,25 @@ function SimilarProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={href}
-      className="group relative block aspect-[3/4] w-full overflow-hidden rounded-2xl border border-white/10 bg-mugen-black shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/5 transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-mugen-magenta/35 hover:shadow-[0_20px_48px_rgba(184,77,122,0.18)] active:scale-[0.99] md:hover:-translate-y-0.5"
+      className="group relative block aspect-[3/4] w-full overflow-visible rounded-2xl border border-white/10 bg-mugen-black shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/5 transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-mugen-magenta/35 hover:shadow-[0_20px_48px_rgba(184,77,122,0.18)] active:scale-[0.99] md:hover:-translate-y-0.5"
     >
-      {/* Full-bleed image */}
-      <div className="absolute inset-0">
+      {/* Circular discount badge — identical to home page ProductCard, floats at top-left corner */}
+      {hasDiscount && (
+        <span
+          className="pointer-events-none absolute -left-1.5 -top-1.5 z-30 flex h-[2.75rem] w-[2.75rem] -rotate-12
+                     items-center justify-center rounded-full border-[3px] border-white
+                     bg-gradient-to-br from-orange-500 via-red-600 to-red-800
+                     text-[0.7rem] font-black tabular-nums leading-none text-white
+                     shadow-[0_10px_28px_rgba(220,38,38,0.55),0_4px_12px_rgba(0,0,0,0.35)]
+                     sm:-left-2 sm:-top-2 sm:h-[3.25rem] sm:w-[3.25rem] sm:text-[0.8125rem]"
+          aria-label={`${discountPct} percent off`}
+        >
+          -{discountPct}%
+        </span>
+      )}
+
+      {/* Full-bleed image + hover overlay — both clipped inside this div */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl">
         {product.image_url ? (
           <Image
             src={img}
@@ -92,56 +107,22 @@ function SimilarProductCard({ product }: { product: Product }) {
             🎭
           </div>
         )}
-      </div>
 
-      {hasDiscount && (
-        <span
-          className="absolute right-2 top-2 z-20 rounded-md border border-white/10 bg-mugen-crimson/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-lg backdrop-blur-sm"
-          aria-hidden
-        >
-          -{discountPct}%
-        </span>
-      )}
+        {/* Hover-reveal overlay — clipped by parent, hidden by default via translate */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 translate-y-full border-t border-white/10 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-3 pb-3.5 pt-3 backdrop-blur-md transition-transform duration-[360ms] ease-out group-hover:translate-y-0">
+          {/* Product name */}
+          <p className="mb-2 line-clamp-2 font-sans text-[11px] font-semibold leading-snug tracking-tight text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)] sm:text-xs">
+            {product.name}
+          </p>
 
-      {/* Name — always visible (top, gradient for readability) */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-2.5 pb-10 pt-2.5 sm:px-3 sm:pt-3 sm:pb-12">
-        <p className="line-clamp-2 font-sans text-[11px] font-semibold leading-snug tracking-tight text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)] sm:text-xs">
-          {product.name}
-        </p>
-      </div>
-
-      {/* Mobile / touch: compact pricing always visible */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/92 via-black/70 to-transparent px-2.5 pb-2.5 pt-8 md:hidden">
-        <div className="flex items-end justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-sans text-base font-bold tabular-nums leading-none text-mugen-gold">
-              {formatCurrency(salePaisa)}
-            </p>
-            {hasDiscount && mrpPaisa != null && (
-              <p className="mt-0.5 font-sans text-[11px] tabular-nums text-white/40 line-through">
-                {formatCurrency(mrpPaisa)}
-              </p>
-            )}
-          </div>
-          {hasRating && (
-            <div className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-white/75">
-              <Star className="h-3 w-3 fill-mugen-gold text-mugen-gold" aria-hidden />
-              <span className="tabular-nums">{Number(product.rating).toFixed(1)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Desktop: hover-reveal footer with pricing */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden translate-y-full border-t border-white/10 bg-gradient-to-t from-black/90 via-black/75 to-black/55 px-3 py-3.5 backdrop-blur-md transition-transform duration-[360ms] ease-out group-hover:translate-y-0 md:block max-md:hidden">
-        <div className="flex flex-col gap-1.5">
+          {/* Pricing + rating row */}
           <div className="flex items-end justify-between gap-2">
-            <div>
-              <p className="font-sans text-xl font-bold tabular-nums leading-none tracking-tight text-mugen-gold">
+            <div className="min-w-0">
+              <p className="font-sans text-base font-bold tabular-nums leading-none text-mugen-gold sm:text-xl">
                 {formatCurrency(salePaisa)}
               </p>
               {hasDiscount && mrpPaisa != null && (
-                <p className="mt-1 font-sans text-xs tabular-nums text-white/45 line-through">
+                <p className="mt-0.5 font-sans text-[11px] tabular-nums text-white/45 line-through sm:mt-1">
                   {formatCurrency(mrpPaisa)}
                 </p>
               )}
@@ -149,8 +130,8 @@ function SimilarProductCard({ product }: { product: Product }) {
             {hasRating && (
               <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
                 <div className="flex items-center gap-1 text-mugen-gold">
-                  <Star className="h-3.5 w-3.5 fill-mugen-gold text-mugen-gold" aria-hidden />
-                  <span className="font-sans text-sm font-bold tabular-nums">
+                  <Star className="h-3 w-3 fill-mugen-gold text-mugen-gold sm:h-3.5 sm:w-3.5" aria-hidden />
+                  <span className="font-sans text-xs font-bold tabular-nums sm:text-sm">
                     {Number(product.rating).toFixed(1)}
                   </span>
                 </div>

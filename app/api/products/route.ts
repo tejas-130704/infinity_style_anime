@@ -60,6 +60,7 @@ export async function POST(request: Request) {
   const model_name = String(body.model_name ?? '').trim() || null
   const color = String(body.color ?? '').trim() || null
   const is_multi_color = Boolean(body.is_multi_color ?? false)
+  const is_spin_reward = Boolean(body.is_spin_reward ?? false)
   const heightRaw = body.height_cm != null ? parseFloat(String(body.height_cm)) : NaN
   const height_cm = Number.isFinite(heightRaw) ? heightRaw : null
   const weightRaw = body.weight_g != null ? parseFloat(String(body.weight_g)) : NaN
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
     category,
     slug: `${slugBase}-${Date.now().toString(36)}`,
     is_multi_color,
+    is_spin_reward,
   }
   if (description) insertRow.description = description
   if (original_price != null) insertRow.original_price = original_price

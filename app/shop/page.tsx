@@ -213,6 +213,10 @@ export default async function ShopPage({
             <div className="flex flex-col gap-12">
               {ALL_SECTIONS.map((sec) => {
                 const secProducts = grouped[sec.id] ?? []
+                if (secProducts.length === 0) return null
+                
+                const visibleCount = sec.id === 'action_figures' ? 8 : 4;
+
                 return (
                   <div key={sec.id}>
                     {/* Section header */}
@@ -231,15 +235,24 @@ export default async function ShopPage({
                       </Link>
                     </div>
 
-                    {secProducts.length > 0 ? (
-                      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-                        {secProducts.slice(0, 4).map((p: any) => (
-                          <ProductCard key={p.id} product={p} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/8 bg-white/2 py-10">
-                        <p className="text-sm text-white/30">No {sec.label.toLowerCase()} yet</p>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
+                      {secProducts.slice(0, visibleCount).map((p: any) => (
+                        <ProductCard key={p.id} product={p} />
+                      ))}
+                    </div>
+
+                    {sec.id === 'action_figures' && (
+                      <div className="mt-8 flex justify-center">
+                        <Link
+                          href={`/shop?category=${sec.id}`}
+                          className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-white/20 bg-white/5 px-6 py-2 text-sm font-semibold text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-mugen-crimson/60 hover:bg-mugen-crimson/10 hover:text-white hover:shadow-[0_0_20px_rgba(184,77,122,0.2)]"
+                        >
+                          <span className="relative">
+                            Show more
+                            <span className="absolute bottom-0 left-0 h-[1.5px] w-0 bg-mugen-crimson transition-all duration-300 group-hover:w-full" />
+                          </span>
+                          <span className="transition-transform duration-300 group-hover:translate-x-0.5">↓</span>
+                        </Link>
                       </div>
                     )}
 

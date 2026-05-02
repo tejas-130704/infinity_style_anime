@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { Package, IndianRupee, CalendarDays, Loader2, LayoutDashboard } from 'lucide-react'
 import { formatCurrency } from '@/lib/pricing-utils'

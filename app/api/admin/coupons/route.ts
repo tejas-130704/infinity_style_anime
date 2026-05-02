@@ -106,7 +106,6 @@ export async function POST(request: Request) {
     is_active: body.is_active !== false,
     first_order_only: Boolean(body.first_order_only),
     apply_to_all,
-    applicable_products: null as string[] | null,
   }
 
   const { data: created, error: insErr } = await supabase.from('coupons').insert(row).select('id').single()

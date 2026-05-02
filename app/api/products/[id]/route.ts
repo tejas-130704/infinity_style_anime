@@ -76,6 +76,7 @@ export async function PATCH(
     updates.color = body.color == null ? null : String(body.color).trim() || null
   }
   if (body.is_multi_color != null) updates.is_multi_color = Boolean(body.is_multi_color)
+  if (body.is_spin_reward != null) updates.is_spin_reward = Boolean(body.is_spin_reward)
   if (body.height_cm !== undefined) {
     updates.height_cm =
       body.height_cm === '' || body.height_cm == null ? null : parseFloat(String(body.height_cm))

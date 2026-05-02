@@ -12,8 +12,12 @@ import { createClient } from '@/lib/supabase/client'
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
   { label: 'Shop', href: '/shop' },
+  { label: 'Custom AF', href: '/shop?category=custom_action_figure' },
   { label: 'About', href: '/about' },
 ] as const
+
+/** Only rendered when NEXT_PUBLIC_SHOW_INVOICE_PREVIEW=true (dev builds). */
+const SHOW_INVOICE_PREVIEW = process.env.NEXT_PUBLIC_SHOW_INVOICE_PREVIEW === 'true'
 
 function navLinkActive(pathname: string, categoryFromUrl: string | undefined, href: string) {
   if (href === '/') return pathname === '/'
@@ -207,6 +211,18 @@ export function Navbar() {
                 </Link>
               )
             })}
+            {SHOW_INVOICE_PREVIEW && (
+              <Link
+                href="/invoice/preview"
+                className={`link-underline-anim font-sans text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
+                  pathname.startsWith('/invoice')
+                    ? 'link-underline-active text-mugen-gold'
+                    : 'text-amber-400/80 hover:text-amber-300'
+                }`}
+              >
+                🧾 Invoice
+              </Link>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
@@ -292,6 +308,19 @@ export function Navbar() {
                     </Link>
                   )
                 })}
+                {SHOW_INVOICE_PREVIEW && (
+                  <Link
+                    href="/invoice/preview"
+                    className={`link-underline-anim mx-auto text-center rounded-xl px-4 py-3.5 font-sans text-base font-semibold transition-colors duration-200 active:bg-white/5 ${
+                      pathname.startsWith('/invoice')
+                        ? 'link-underline-active text-mugen-gold'
+                        : 'text-amber-400/80 hover:text-amber-300'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    🧾 Invoice
+                  </Link>
+                )}
 
                 {/* Actions Section */}
                 <div className="mt-2 border-t border-white/15 pt-2">

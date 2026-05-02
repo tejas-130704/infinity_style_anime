@@ -88,7 +88,7 @@ export async function middleware(request: NextRequest) {
   const hasAppSession = nextAuthAuthed || !!supabaseUserId
 
   // ── Redirect authenticated users away from login/signup ────────────────────
-  if (path === '/login' || path === '/signup') {
+  if (path === '/login') {
     if (hasAppSession) {
       return NextResponse.redirect(new URL('/', request.url))
     }

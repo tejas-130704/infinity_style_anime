@@ -1,8 +1,7 @@
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { Toaster } from 'sonner'
 import { AssetProtectionProvider } from '@/components/security/AssetProtectionProvider'
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -11,7 +10,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <AssetProtectionProvider>
         {children}
       </AssetProtectionProvider>
-      <ToastContainer position="top-right" autoClose={3000} newestOnTop theme="dark" />
+      <Toaster position="top-right" richColors theme="dark" closeButton />
     </SessionProvider>
   )
 }

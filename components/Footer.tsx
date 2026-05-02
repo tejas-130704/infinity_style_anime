@@ -149,24 +149,24 @@ export function Footer() {
 
           {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-sans text-sm font-medium text-white md:justify-end">
-            <a
-              href="#"
+            <Link
+              href="/legal/privacy-policy"
               className="link-underline-anim min-h-11 py-2 text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0"
             >
               Privacy Policy
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/legal/terms-and-conditions"
               className="link-underline-anim min-h-11 py-2 text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0"
             >
               Terms of Service
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/legal/cookie-policy"
               className="link-underline-anim min-h-11 py-2 text-white transition-colors duration-200 hover:text-mugen-glow sm:min-h-0"
             >
               Cookie Policy
-            </a>
+            </Link>
           </div>
         </div>
       </div>

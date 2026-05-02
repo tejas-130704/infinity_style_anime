@@ -65,6 +65,10 @@ export default function CheckoutSuccessClient() {
       })
       .catch(console.error)
       .finally(() => setLoading(false))
+
+    // Clear spin wheel reward since checkout was successful
+    localStorage.removeItem('spinReward')
+    localStorage.removeItem('spinUsed')
   }, [orderId, devPreview])
 
   const transactionId =

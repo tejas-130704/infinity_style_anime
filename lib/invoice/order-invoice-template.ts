@@ -1,6 +1,4 @@
 import { formatCurrency } from '@/lib/pricing-utils'
-import { BRAND_LOGO_PNG_SRC } from '@/lib/constants'
-
 export type OrderInvoiceLine = {
   name: string
   quantity: number
@@ -51,16 +49,13 @@ function font(style: string): string {
  * Single global invoice template (dark / premium). Inline CSS for email clients.
  */
 export function buildOrderInvoiceHtml(payload: OrderInvoicePayload, opts?: { assetBaseUrl?: string }): string {
-  const base = (opts?.assetBaseUrl ?? '').replace(/\/$/, '')
-  const logoUrl = base ? `${base}${BRAND_LOGO_PNG_SRC}` : ''
-
   const rows = payload.lines
     .map(
       (l) => `
       <tr>
-        <td valign="top" style="${font('padding:12px 16px 12px 0;border-bottom:1px solid rgba(255,255,255,0.07);color:#e8e4dc;font-size:14px;line-height:1.45;word-break:break-word;')}">${escapeHtml(l.name)}</td>
-        <td valign="top" width="56" style="${font('padding:12px 8px;border-bottom:1px solid rgba(255,255,255,0.07);color:#b8b3a8;font-size:14px;text-align:center;vertical-align:top;')}">${l.quantity}</td>
-        <td valign="top" width="112" style="${font('padding:12px 0 12px 12px;border-bottom:1px solid rgba(255,255,255,0.07);color:#f0ebe3;font-size:14px;text-align:right;vertical-align:top;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(l.lineTotalPaisa)}</td>
+        <td valign="top" style="${font('padding:12px 16px 12px 0;border-bottom:1px solid #e5e7eb;color:#111827;font-size:14px;line-height:1.45;word-break:break-word;')}">${escapeHtml(l.name)}</td>
+        <td valign="top" width="56" style="${font('padding:12px 8px;border-bottom:1px solid #e5e7eb;color:#4b5563;font-size:14px;text-align:center;vertical-align:top;')}">${l.quantity}</td>
+        <td valign="top" width="112" style="${font('padding:12px 0 12px 12px;border-bottom:1px solid #e5e7eb;color:#111827;font-size:14px;text-align:right;vertical-align:top;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(l.lineTotalPaisa)}</td>
       </tr>`
     )
     .join('')
@@ -84,30 +79,31 @@ export function buildOrderInvoiceHtml(payload: OrderInvoicePayload, opts?: { ass
   <title>Invoice — ${escapeHtml(payload.orderId.slice(0, 8))}</title>
   <!--[if mso]><style type="text/css">body, table, td, p { font-family: 'Segoe UI', Arial, sans-serif !important; }</style><![endif]-->
 </head>
-<body style="margin:0;padding:0;background:#050505;${font('font-size:15px;line-height:1.5;color:#d8d3ca;-webkit-font-smoothing:antialiased;')}">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${font('background:linear-gradient(180deg,#080808 0%,#0d0c0b 40%,#0a0908 100%);padding:32px 16px;')}">
+<body style="margin:0;padding:0;background:#f3f4f6;${font('font-size:15px;line-height:1.5;color:#1f2937;-webkit-font-smoothing:antialiased;')}">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${font('background:#f3f4f6;padding:32px 16px;')}">
     <tr>
       <td align="center">
-        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="${font('max-width:640px;width:100%;border-radius:16px;border:1px solid rgba(6,182,212,0.38);background:linear-gradient(165deg,rgba(6,182,212,0.08) 0%,rgba(255,255,255,0.03) 45%,rgba(8,10,14,0.95) 100%);box-shadow:0 0 52px rgba(6,182,212,0.22);overflow:hidden;border-collapse:collapse;')}">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="${font('max-width:640px;width:100%;border-radius:8px;border:1px solid #e5e7eb;background:#ffffff;overflow:hidden;border-collapse:collapse;')}">
           <tr>
-            <td style="padding:28px 28px 22px;border-bottom:1px solid rgba(6,182,212,0.2);">
+            <td style="padding:28px 28px 22px;border-bottom:1px solid #e5e7eb;">
               <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;')}">
                 <tr>
                   <td valign="middle" align="left" style="${font('padding:0 16px 0 0;vertical-align:middle;')}">
-                    ${
-                      logoUrl
-                        ? `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>
-                    <td valign="middle" style="padding:0 14px 0 0;vertical-align:middle;">
-                      <img src="${escapeHtml(logoUrl)}" alt="3D Kalakaar" width="56" height="56" style="display:block;width:56px;height:56px;max-width:56px;max-height:56px;object-fit:contain;border-radius:9999px;-webkit-border-radius:9999px;overflow:hidden;border:1px solid rgba(6,182,212,0.35);filter:drop-shadow(0 0 14px rgba(6,182,212,0.45));" />
-                    </td>
-                    <td valign="middle" style="${font('vertical-align:middle;font-size:19px;font-weight:700;color:#ecfeff;letter-spacing:0.03em;line-height:1.2;')}">3D Kalakaar</td>
-                  </tr></table>`
-                        : `<span style="${font('font-size:20px;letter-spacing:0.12em;color:#a5f3fc;font-weight:700;')}">3D Kalakaar</span>`
-                    }
+                    <table cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                      <tr>
+                        <td valign="middle" style="padding-right:10px;">
+                          <img src="${opts?.assetBaseUrl || ''}/assests/logo/logo.png" alt="Infinity Style Logo" width="44" height="44" style="display:block; width:44px; height:44px; border:0; object-fit:contain;" />
+                        </td>
+                        <td valign="middle">
+                          <div style="font-family:'Cinzel', serif, ${FONT_UI}; font-size:18px; font-weight:700; color:#111827; letter-spacing:-0.02em; line-height:1.1;">Infinity Style</div>
+                          <div style="${font('font-size:11px;font-weight:600;color:#6b7280;margin-top:2px;letter-spacing:0.02em;')}">by 3DKalakaar</div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                   <td valign="middle" align="right" style="${font('vertical-align:middle;text-align:right;')}">
-                    <div style="${font('font-size:10px;letter-spacing:0.18em;color:#67e8f9;text-transform:uppercase;font-weight:600;line-height:1.3;')}">Tax Invoice</div>
-                    <div style="margin-top:8px;font-size:12px;color:#9ca3af;font-family:${FONT_MONO};line-height:1.35;word-break:break-all;">#${escapeHtml(payload.orderId)}</div>
+                    <div style="${font('font-size:11px;letter-spacing:0.15em;color:#6b7280;text-transform:uppercase;font-weight:600;line-height:1.3;')}">Tax Invoice</div>
+                    <div style="margin-top:8px;font-size:12px;color:#4b5563;font-family:${FONT_MONO};line-height:1.35;word-break:break-all;">#${escapeHtml(payload.orderId)}</div>
                   </td>
                 </tr>
               </table>
@@ -118,30 +114,30 @@ export function buildOrderInvoiceHtml(payload: OrderInvoicePayload, opts?: { ass
               <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;table-layout:fixed;')}">
                 <tr>
                   <td valign="top" width="50%" style="${font('vertical-align:top;padding:0 20px 0 0;')}">
-                    <div style="${font('font-size:10px;letter-spacing:0.14em;color:#9ca3af;text-transform:uppercase;font-weight:600;margin-bottom:10px;')}">Bill to</div>
-                    <div style="${font('font-size:15px;color:#f0ebe3;font-weight:600;line-height:1.35;margin-bottom:6px;')}">${escapeHtml(payload.shipToName)}</div>
-                    <div style="${font('font-size:13px;color:#b5b0a6;line-height:1.55;')}">${escapeHtml(payload.shipToEmail)}<br/>${escapeHtml(payload.shipToPhone)}</div>
-                    <div style="${font('margin-top:10px;font-size:13px;color:#9a958c;line-height:1.55;')}">${addrBlock}</div>
+                    <div style="${font('font-size:11px;letter-spacing:0.1em;color:#6b7280;text-transform:uppercase;font-weight:600;margin-bottom:10px;')}">Bill to</div>
+                    <div style="${font('font-size:15px;color:#111827;font-weight:600;line-height:1.35;margin-bottom:6px;')}">${escapeHtml(payload.shipToName)}</div>
+                    <div style="${font('font-size:13px;color:#4b5563;line-height:1.55;')}">${escapeHtml(payload.shipToEmail)}<br/>${escapeHtml(payload.shipToPhone)}</div>
+                    <div style="${font('margin-top:10px;font-size:13px;color:#6b7280;line-height:1.55;')}">${addrBlock}</div>
                   </td>
-                  <td valign="top" width="50%" style="${font('vertical-align:top;padding:0 0 0 20px;border-left:1px solid rgba(255,255,255,0.06);')}">
-                    <div style="${font('font-size:10px;letter-spacing:0.14em;color:#9ca3af;text-transform:uppercase;font-weight:600;margin-bottom:10px;')}">Payment</div>
-                    <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;font-size:13px;color:#e8e4dc;')}">
+                  <td valign="top" width="50%" style="${font('vertical-align:top;padding:0 0 0 20px;border-left:1px solid #e5e7eb;')}">
+                    <div style="${font('font-size:11px;letter-spacing:0.1em;color:#6b7280;text-transform:uppercase;font-weight:600;margin-bottom:10px;')}">Payment</div>
+                    <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;font-size:13px;color:#1f2937;')}">
                       <tr>
-                        <td style="${font('color:#8a8580;padding:5px 12px 5px 0;vertical-align:top;width:42%;')}">Date &amp; time</td>
+                        <td style="${font('color:#6b7280;padding:5px 12px 5px 0;vertical-align:top;width:42%;')}">Date &amp; time</td>
                         <td align="right" style="${font('padding:5px 0;vertical-align:top;text-align:right;')}">${paidLabel}</td>
                       </tr>
                       <tr>
-                        <td style="${font('color:#8a8580;padding:5px 12px 5px 0;vertical-align:top;')}">Method</td>
+                        <td style="${font('color:#6b7280;padding:5px 12px 5px 0;vertical-align:top;')}">Method</td>
                         <td align="right" style="${font('padding:5px 0;vertical-align:top;text-align:right;line-height:1.4;')}">${escapeHtml(payload.paymentMethodLabel)}</td>
                       </tr>
                       <tr>
-                        <td style="${font('color:#8a8580;padding:5px 12px 5px 0;vertical-align:top;')}">Transaction ID</td>
+                        <td style="${font('color:#6b7280;padding:5px 12px 5px 0;vertical-align:top;')}">Transaction ID</td>
                         <td align="right" style="padding:5px 0;vertical-align:top;text-align:right;font-size:11px;line-height:1.4;font-family:${FONT_MONO};word-break:break-all;">${escapeHtml(payload.transactionId)}</td>
                       </tr>
                       ${
                         payload.razorpayOrderId
                           ? `<tr>
-                        <td style="${font('color:#8a8580;padding:5px 12px 5px 0;vertical-align:top;')}">Gateway order</td>
+                        <td style="${font('color:#6b7280;padding:5px 12px 5px 0;vertical-align:top;')}">Gateway order</td>
                         <td align="right" style="padding:5px 0;vertical-align:top;text-align:right;font-size:11px;line-height:1.4;font-family:${FONT_MONO};word-break:break-all;">${escapeHtml(payload.razorpayOrderId)}</td>
                       </tr>`
                           : ''
@@ -154,12 +150,12 @@ export function buildOrderInvoiceHtml(payload: OrderInvoicePayload, opts?: { ass
           </tr>
           <tr>
             <td style="padding:0 28px 24px;">
-              <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);table-layout:fixed;')}">
+              <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;border-radius:4px;overflow:hidden;border:1px solid #e5e7eb;table-layout:fixed;')}">
                 <thead>
-                  <tr style="background:rgba(6,182,212,0.12);">
-                    <th align="left" style="${font('padding:12px 16px 12px 14px;font-size:10px;letter-spacing:0.14em;color:#a5f3fc;text-transform:uppercase;font-weight:600;width:58%;')}">Item</th>
-                    <th align="center" width="56" style="${font('padding:12px 8px;font-size:10px;letter-spacing:0.14em;color:#a5f3fc;text-transform:uppercase;font-weight:600;')}">Qty</th>
-                    <th align="right" width="120" style="${font('padding:12px 14px 12px 8px;font-size:10px;letter-spacing:0.14em;color:#a5f3fc;text-transform:uppercase;font-weight:600;')}">Amount</th>
+                  <tr style="background:#f9fafb;">
+                    <th align="left" style="${font('padding:12px 16px 12px 14px;font-size:11px;letter-spacing:0.1em;color:#4b5563;text-transform:uppercase;font-weight:600;width:58%;')}">Item</th>
+                    <th align="center" width="56" style="${font('padding:12px 8px;font-size:11px;letter-spacing:0.1em;color:#4b5563;text-transform:uppercase;font-weight:600;')}">Qty</th>
+                    <th align="right" width="120" style="${font('padding:12px 14px 12px 8px;font-size:11px;letter-spacing:0.1em;color:#4b5563;text-transform:uppercase;font-weight:600;')}">Amount</th>
                   </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -168,44 +164,44 @@ export function buildOrderInvoiceHtml(payload: OrderInvoicePayload, opts?: { ass
           </tr>
           <tr>
             <td align="right" style="padding:0 28px 28px;">
-              <table width="300" cellspacing="0" cellpadding="0" align="right" style="${font('border-collapse:collapse;font-size:14px;color:#d8d3ca;max-width:100%;')}">
+              <table width="300" cellspacing="0" cellpadding="0" align="right" style="${font('border-collapse:collapse;font-size:14px;color:#1f2937;max-width:100%;')}">
                 <tr>
-                  <td style="${font('padding:8px 16px 8px 0;color:#9a958c;text-align:left;vertical-align:baseline;')}">Item total</td>
-                  <td width="120" align="right" style="${font('padding:8px 0;color:#f0ebe3;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.itemTotalPaisa)}</td>
+                  <td style="${font('padding:8px 16px 8px 0;color:#6b7280;text-align:left;vertical-align:baseline;')}">Item total</td>
+                  <td width="120" align="right" style="${font('padding:8px 0;color:#111827;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.itemTotalPaisa)}</td>
                 </tr>
                 <tr>
-                  <td style="${font('padding:8px 16px 8px 0;color:#9a958c;text-align:left;vertical-align:baseline;')}">Delivery</td>
-                  <td align="right" style="${font('padding:8px 0;color:#f0ebe3;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.deliveryPaisa)}</td>
+                  <td style="${font('padding:8px 16px 8px 0;color:#6b7280;text-align:left;vertical-align:baseline;')}">Delivery</td>
+                  <td align="right" style="${font('padding:8px 0;color:#111827;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.deliveryPaisa)}</td>
                 </tr>
                 ${
                   payload.discountPaisa > 0
                     ? `<tr>
-                  <td style="${font('padding:8px 16px 8px 0;color:#6ee7b7;text-align:left;vertical-align:baseline;')}">Discount</td>
-                  <td align="right" style="${font('padding:8px 0;color:#6ee7b7;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">−${formatInrPaisa(payload.discountPaisa)}</td>
+                  <td style="${font('padding:8px 16px 8px 0;color:#059669;text-align:left;vertical-align:baseline;')}">Discount</td>
+                  <td align="right" style="${font('padding:8px 0;color:#059669;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">−${formatInrPaisa(payload.discountPaisa)}</td>
                 </tr>`
                     : ''
                 }
                 ${
                   payload.gstPaisa > 0
                     ? `<tr>
-                  <td style="${font('padding:8px 16px 8px 0;color:#9a958c;text-align:left;vertical-align:baseline;')}">GST</td>
-                  <td align="right" style="${font('padding:8px 0;color:#f0ebe3;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.gstPaisa)}</td>
+                  <td style="${font('padding:8px 16px 8px 0;color:#6b7280;text-align:left;vertical-align:baseline;')}">GST</td>
+                  <td align="right" style="${font('padding:8px 0;color:#111827;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.gstPaisa)}</td>
                 </tr>`
                     : ''
                 }
                 <tr>
-                  <td colspan="2" style="padding:0;border-top:1px solid rgba(6,182,212,0.28);line-height:0;font-size:0;">&nbsp;</td>
+                  <td colspan="2" style="padding:0;border-top:1px solid #e5e7eb;line-height:0;font-size:0;">&nbsp;</td>
                 </tr>
                 <tr>
-                  <td style="${font('padding:14px 16px 6px 0;font-size:15px;font-weight:700;color:#ecfeff;text-align:left;vertical-align:baseline;')}">Amount paid</td>
-                  <td align="right" style="${font('padding:14px 0 6px 0;font-size:18px;font-weight:700;color:#22d3ee;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.totalPaisa)}</td>
+                  <td style="${font('padding:14px 16px 6px 0;font-size:15px;font-weight:700;color:#111827;text-align:left;vertical-align:baseline;')}">Amount paid</td>
+                  <td align="right" style="${font('padding:14px 0 6px 0;font-size:18px;font-weight:700;color:#111827;text-align:right;vertical-align:baseline;font-variant-numeric:tabular-nums;white-space:nowrap;')}">${formatInrPaisa(payload.totalPaisa)}</td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="padding:18px 28px 24px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.25);">
-              <p style="${font('margin:0;font-size:12px;line-height:1.65;color:#8a8580;text-align:center;')}">Thank you for shopping with 3D Kalakaar. For support, reply to this email or visit our website.</p>
+            <td style="padding:18px 28px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;">
+              <p style="${font('margin:0;font-size:12px;line-height:1.65;color:#6b7280;text-align:center;')}">Thank you for shopping with Infinity Style. For support, reply to this email.</p>
             </td>
           </tr>
         </table>
@@ -266,4 +262,137 @@ export function orderRowToInvoicePayload(order: Record<string, unknown>, payment
     shipToPhone: addr?.phone1?.trim() || '',
     shipToAddressLines: shipToAddressLines.length ? shipToAddressLines : ['—'],
   }
+}
+
+/**
+ * Admin invoice — identical to customer invoice but prepended with a coloured
+ * "Admin Notice" banner that contains full client + payment details.
+ */
+export function buildAdminInvoiceHtml(
+  payload: OrderInvoicePayload,
+  opts?: { assetBaseUrl?: string }
+): string {
+  const paidAt = new Date(payload.paidAtIso)
+  const paidLabel = Number.isNaN(paidAt.getTime())
+    ? escapeHtml(payload.paidAtIso)
+    : escapeHtml(
+        paidAt.toLocaleString('en-IN', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+      )
+
+  const addrFull = payload.shipToAddressLines.map((l) => escapeHtml(l)).join(', ')
+
+  const adminBanner = `
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+  style="${font('background:#1a1a2e;border-radius:8px 8px 0 0;border:2px solid #e63946;margin-bottom:0;')}"
+>
+  <tr>
+    <td style="padding:18px 28px 14px;">
+      <div style="${font('font-size:11px;letter-spacing:0.18em;color:#e63946;text-transform:uppercase;font-weight:700;margin-bottom:10px;')}">&#x26A0; Admin Notification — Infinity Style</div>
+      <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;font-size:13px;line-height:1.6;')}">
+        <tr>
+          <td width="120" valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Customer
+          </td>
+          <td valign="top" style="${font('color:#f3f4f6;padding:3px 0;font-weight:600;vertical-align:top;')}">
+            ${escapeHtml(payload.shipToName)}
+          </td>
+        </tr>
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Email
+          </td>
+          <td valign="top" style="${font('color:#f3f4f6;padding:3px 0;vertical-align:top;')}">
+            ${escapeHtml(payload.shipToEmail)}
+          </td>
+        </tr>
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Phone
+          </td>
+          <td valign="top" style="${font('color:#f3f4f6;padding:3px 0;vertical-align:top;')}">
+            ${escapeHtml(payload.shipToPhone)}
+          </td>
+        </tr>
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Address
+          </td>
+          <td valign="top" style="${font('color:#f3f4f6;padding:3px 0;vertical-align:top;')}">
+            ${addrFull}
+          </td>
+        </tr>
+        <tr><td colspan="2" style="padding:8px 0 6px;"><hr style="border:none;border-top:1px solid #374151;margin:0;"/></td></tr>
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Payment ID
+          </td>
+          <td valign="top" style="padding:3px 0;font-family:${FONT_MONO};font-size:12px;color:#6ee7b7;vertical-align:top;word-break:break-all;">
+            ${escapeHtml(payload.transactionId)}
+          </td>
+        </tr>
+        ${
+          payload.razorpayOrderId
+            ? `<tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">Gateway Order</td>
+          <td valign="top" style="padding:3px 0;font-family:${FONT_MONO};font-size:12px;color:#6ee7b7;vertical-align:top;word-break:break-all;">${escapeHtml(payload.razorpayOrderId)}</td>
+        </tr>`
+            : ''
+        }
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Paid At
+          </td>
+          <td valign="top" style="${font('color:#f3f4f6;padding:3px 0;vertical-align:top;')}">
+            ${paidLabel}
+          </td>
+        </tr>
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Amount
+          </td>
+          <td valign="top" style="${font('color:#34d399;padding:3px 0;font-weight:700;font-size:15px;vertical-align:top;')}">
+            ${formatInrPaisa(payload.totalPaisa)} <span style="font-size:11px;color:#9ca3af;font-weight:400;">PAID</span>
+          </td>
+        </tr>
+        ${payload.couponCode ? `<tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">Coupon</td>
+          <td valign="top" style="${font('color:#fbbf24;padding:3px 0;vertical-align:top;')}">${escapeHtml(payload.couponCode)}</td>
+        </tr>` : ''}
+        <tr><td colspan="2" style="padding:8px 0 6px;"><hr style="border:none;border-top:1px solid #374151;margin:0;"/></td></tr>
+        <tr>
+          <td valign="top" style="${font('color:#9ca3af;padding:3px 12px 3px 0;vertical-align:top;')}">
+            Order Items
+          </td>
+          <td valign="top" style="${font('color:#f3f4f6;padding:3px 0;vertical-align:top;')}">
+            ${payload.lines
+              .map(
+                (l) =>
+                  `${escapeHtml(l.name)} &times; ${l.quantity} — ${formatInrPaisa(l.lineTotalPaisa)}`
+              )
+              .join('<br/>')}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+`
+
+  // Stitch admin banner above the standard customer invoice HTML
+  const customerHtml = buildOrderInvoiceHtml(payload, opts)
+  // Insert banner right after <body ...> opening tag
+  return customerHtml.replace(
+    /<body([^>]*)>/,
+    `<body$1>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f23;padding:24px 16px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="max-width:640px;width:100%;">
+        <tr><td>${adminBanner}</td></tr>
+      </table>
+    </td></tr>
+  </table>`
+  )
 }

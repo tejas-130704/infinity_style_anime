@@ -6,11 +6,12 @@ import { GlowButton } from '@/components/GlowButton';
 import { useUserMe } from '@/hooks/useUserMe';
 import { PriceBreakdown } from '@/components/checkout/PriceBreakdown';
 import { CouponInput } from '@/components/checkout/CouponInput';
+import { StudentVerification } from '@/components/checkout/StudentVerification';
 import { calculateCheckoutBreakdown, formatCurrency } from '@/lib/pricing-utils';
 import { initiateRazorpayPayment, createRazorpayOrder } from '@/lib/razorpay-utils';
 import { DELIVERY_CHARGE } from '@/lib/constants';
 import type { PriceBreakdown as PriceBreakdownType, CouponValidationResponse } from '@/lib/types';
-import { Loader2, ShoppingBag, MapPin, Mail, Phone } from 'lucide-react';
+import { Loader2, ShoppingBag, MapPin, Gift } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { shouldOptimizeImageSrc } from '@/lib/image-allowlist';
@@ -60,6 +61,20 @@ export default function CheckoutPageNew() {
     image_url: string | null;
     slug: string | null;
   } | null>(null);
+
+  // Student reward state
+  const [rewardProduct, setRewardProduct] = useState<{
+    id: string;
+    name: string;
+    image_url: string | null;
+    price: number;
+    original_price?: number | null;
+    slug?: string | null;
+  } | null>(null);
+
+  const handleRewardWon = (product: typeof rewardProduct) => {
+    setRewardProduct(product);
+  };
   
   // Form state
   const [form, setForm] = useState({
@@ -79,6 +94,7 @@ export default function CheckoutPageNew() {
   const itemTotal = cartItems.reduce((acc, item) => {
     return acc + (item.products?.price || 0) * item.quantity;
   }, 0);
+  // Reward is always ₹0 — doesn't affect totals
 
   const deliveryPaise = DELIVERY_CHARGE * 100;
   const priceBreakdown: PriceBreakdownType = calculateCheckoutBreakdown(
@@ -151,6 +167,21 @@ export default function CheckoutPageNew() {
     })();
   }, [meLoading, meUser, router, isBuyNow]);
 
+  /**
+   * Serialize the items currently shown on the checkout page so the
+   * coupon API can validate against them directly — no cart DB needed.
+   * Works for BOTH cart and Buy Now flows.
+   */
+  const buildInlineItems = () =>
+    cartItems
+      .filter((item) => item.products?.id && (item.products?.price ?? 0) > 0)
+      .map((item) => ({
+        product_id: item.products!.id,
+        price: item.products!.price,
+        quantity: item.quantity,
+      }));
+
+  // Re-validate applied coupon whenever the displayed items change
   useEffect(() => {
     if (cartItems.length === 0) {
       setAppliedCoupon(null);
@@ -165,7 +196,8 @@ export default function CheckoutPageNew() {
         const res = await fetch('/api/coupons/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coupon_code: code }),
+          // Always send the items currently on screen — avoids any cart DB check
+          body: JSON.stringify({ coupon_code: code, inline_items: buildInlineItems() }),
         });
         const d = await res.json();
         if (cancelled) return;
@@ -183,12 +215,11 @@ export default function CheckoutPageNew() {
         }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartItems, appliedCoupon?.code]);
 
-  // Apply coupon
+  // Apply coupon — validate against whatever items are currently shown on screen
   const handleApplyCoupon = useCallback(
     async (code: string): Promise<{ success: boolean; error?: string }> => {
       const upper = code.trim().toUpperCase();
@@ -201,6 +232,8 @@ export default function CheckoutPageNew() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             coupon_code: code,
+            // Send the visible items — no separate Buy Now / cart DB logic needed
+            inline_items: buildInlineItems(),
           }),
         });
 
@@ -220,7 +253,8 @@ export default function CheckoutPageNew() {
         };
       }
     },
-    [appliedCoupon?.code]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [appliedCoupon?.code, cartItems]
   );
 
   // Remove coupon
@@ -236,36 +270,39 @@ export default function CheckoutPageNew() {
     setSubmitting(true);
 
     try {
-      // ── Buy Now: silently add the product to DB cart so /api/checkout can read it ──
-      if (isBuyNow && buyNowProduct) {
-        const addRes = await fetch('/api/cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product_id: buyNowProduct.id, quantity: 1 }),
-        });
-        if (!addRes.ok) {
-          const j = await addRes.json().catch(() => ({})) as { error?: string };
-          setError(j.error || 'Could not process Buy Now — please try again');
-          return;
-        }
-      }
-
-      // Validate cart
-      if (cartItems.length === 0) {
+      // ── Guard: need items in either flow ──────────────────────────────────
+      if (!isBuyNow && cartItems.length === 0) {
         setError('Your cart is empty');
         return;
+      }
+      if (isBuyNow && !buyNowProduct) {
+        setError('Product data was lost — please go back and try Buy Now again.');
+        return;
+      }
+
+      // ── Build the request body ────────────────────────────────────────────
+      // For Buy Now: include direct_purchase so the backend skips the cart DB.
+      const checkoutPayload: Record<string, unknown> = {
+        ...form,
+        delivery_charge: DELIVERY_CHARGE * 100,
+        coupon_code: appliedCoupon?.code || '',
+        payment_method: 'razorpay',
+        reward_product_id: rewardProduct?.id ?? null,
+      };
+
+      if (isBuyNow && buyNowProduct) {
+        checkoutPayload.direct_purchase = {
+          product_id: buyNowProduct.id,
+          price: buyNowProduct.price,
+          quantity: 1,
+        } satisfies DirectPurchaseItem;
       }
 
       // Create order in database
       const createOrderRes = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          delivery_charge: DELIVERY_CHARGE * 100,
-          coupon_code: appliedCoupon?.code || '',
-          payment_method: 'razorpay',
-        }),
+        body: JSON.stringify(checkoutPayload),
       });
 
       const orderData = await createOrderRes.json();
@@ -353,8 +390,26 @@ export default function CheckoutPageNew() {
     );
   }
 
-  // Empty cart
-  if (cartItems.length === 0) {
+  // Buy Now: if product data was lost (e.g. page refresh), redirect gracefully
+  if (isBuyNow && !buyNowProduct) {
+    return (
+      <main className="min-h-screen bg-mugen-black pt-28 pb-20">
+        <div className="container mx-auto max-w-md px-4 text-center">
+          <ShoppingBag className="mx-auto h-16 w-16 text-white/40" />
+          <h2 className="mt-4 text-2xl font-bold text-white">Session expired</h2>
+          <p className="mt-2 text-white/60">
+            Your Buy Now session is no longer available. Please go back and try again.
+          </p>
+          <Link href="/shop">
+            <GlowButton className="mt-6">Back to Shop</GlowButton>
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Empty cart (cart flow only)
+  if (!isBuyNow && cartItems.length === 0) {
     return (
       <main className="min-h-screen bg-mugen-black pt-28 pb-20">
         <div className="container mx-auto max-w-md px-4 text-center">
@@ -491,6 +546,9 @@ export default function CheckoutPageNew() {
               onApplyCoupon={handleApplyCoupon}
               disabled={submitting}
             />
+
+            {/* Student Verification + Spin Wheel */}
+            <StudentVerification onRewardWon={handleRewardWon} contextId={isBuyNow && buyNowProduct ? buyNowProduct.id : cartItems.map(item => item.products?.id).sort().join('_')} />
           </div>
 
           {/* Right Column - Order Summary */}
@@ -523,6 +581,34 @@ export default function CheckoutPageNew() {
                     </div>
                   </div>
                 ))}
+
+                {/* Reward product at ₹0 */}
+                {rewardProduct && (
+                  <div className="flex gap-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2">
+                    <div className="relative h-16 w-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/10">
+                      {rewardProduct.image_url ? (
+                        <Image
+                          src={rewardProduct.image_url}
+                          alt={rewardProduct.name}
+                          fill
+                          className="object-cover"
+                          unoptimized={!shouldOptimizeImageSrc(rewardProduct.image_url)}
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Gift className="h-6 w-6 text-yellow-400/60" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-white truncate">
+                        {rewardProduct.name}
+                      </h4>
+                      <p className="text-xs text-yellow-400 mt-1 font-semibold">🎁 Student Reward</p>
+                    </div>
+                    <div className="text-sm font-black text-green-400">₹0</div>
+                  </div>
+                )}
               </div>
             </div>
 

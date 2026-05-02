@@ -15,7 +15,6 @@ export type CouponRow = {
   times_used: number | null
   is_active: boolean
   first_order_only: boolean
-  applicable_products: string[] | null
   apply_to_all: boolean | null
 }
 
@@ -77,12 +76,10 @@ async function loadCouponProductIds(couponId: string): Promise<string[]> {
 function cartMatchesProducts(
   cartProductIds: string[],
   applyAll: boolean,
-  applicableProducts: string[] | null,
   junctionIds: string[]
 ): boolean {
   if (applyAll) return true
-  const fromArray = applicableProducts ?? []
-  const allowed = new Set([...fromArray, ...junctionIds])
+  const allowed = new Set(junctionIds)
   if (allowed.size === 0) return false
   return cartProductIds.some((id) => allowed.has(id))
 }
@@ -152,7 +149,6 @@ export async function validateCouponForCart(input: ValidateCouponInput): Promise
   const eligible = cartMatchesProducts(
     input.productIds,
     applyAll,
-    c.applicable_products,
     junctionIds
   )
   if (!eligible) {

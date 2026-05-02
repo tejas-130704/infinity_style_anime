@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/admin-auth'
 import { OrderStatusSelect } from '@/components/admin/OrderStatusSelect'
 import { FulfillmentStatusSelect } from '@/components/admin/FulfillmentStatusSelect'
@@ -22,10 +23,12 @@ type AdminOrderRow = {
     price: number
     products: { id: string; name: string; image_url: string | null } | null
   }> | null
-  addresses: { name: string; email: string; phone1: string } | null
+  // joined via address_id FK — primary source of customer info
+  addresses: { name: string; email: string; phone1: string } | { name: string; email: string; phone1: string }[] | null
 }
 
 export default async function AdminOrdersPage() {
+  // Auth check uses the session-aware client
   const supabase = await createClient()
   const auth = await requireAdmin(supabase)
   if ('error' in auth) {
@@ -37,7 +40,10 @@ export default async function AdminOrdersPage() {
     )
   }
 
-  const { data: orders, error } = await supabase
+  // Data queries use the service-role client to bypass RLS on addresses
+  const db = createAdminClient()
+
+  const { data: orders, error } = await db
     .from('orders')
     .select(
       `
@@ -74,6 +80,27 @@ export default async function AdminOrdersPage() {
 
   const rows = (orders ?? []) as unknown as AdminOrderRow[]
 
+  // --- Batch-fetch profiles as fallback for orders where addresses join returned null ---
+  const missingProfileIds = [
+    ...new Set(
+      rows.filter((o) => {
+        const addrObj = Array.isArray(o.addresses) ? o.addresses[0] : o.addresses
+        return !addrObj?.name
+      }).map((o) => o.user_id)
+    ),
+  ]
+  const profileMap: Record<string, { name: string | null; email: string | null }> = {}
+  if (missingProfileIds.length > 0) {
+    const { data: profs } = await db
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', missingProfileIds)
+    for (const p of profs ?? []) {
+      const row = p as { id: string; name: string | null; email: string | null }
+      profileMap[row.id] = { name: row.name, email: row.email }
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -93,12 +120,23 @@ export default async function AdminOrdersPage() {
       ) : (
         <div className="mt-10 space-y-6">
           {rows.map((o) => {
-            const customerName = o.addresses?.name ?? '—'
-            const customerEmail = o.addresses?.email ?? '—'
-            const customerPhone = o.addresses?.phone1 ?? '—'
+            // Primary: address snapshot saved at checkout. Fallback: profile row.
+            const prof = profileMap[o.user_id]
+            const addrObj = Array.isArray(o.addresses) ? o.addresses[0] : o.addresses
+            const customerName = addrObj?.name || prof?.name || '—'
+            const customerEmail = addrObj?.email || prof?.email || '—'
+            const customerPhone = addrObj?.phone1 || '—'
+            const isPaid = o.payment_status === 'completed'
 
             return (
-              <div key={o.id} className="overflow-hidden rounded-xl border border-white/10 bg-mugen-dark/40">
+              <div
+                key={o.id}
+                className={`overflow-hidden rounded-xl border bg-mugen-dark/40 transition-all ${
+                  isPaid
+                    ? 'border-yellow-400/60 shadow-[0_0_0_1px_rgba(250,204,21,0.25),0_0_18px_rgba(250,204,21,0.12)]'
+                    : 'border-white/10'
+                }`}
+              >
                 <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 sm:px-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">

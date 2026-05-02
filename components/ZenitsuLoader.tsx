@@ -46,8 +46,6 @@ export default function ZenitsuLoader({ isLoading, children }: ZenitsuLoaderProp
     }
   }, [isLoading])
 
-  if (!showLoader) return <>{children}</>
-
   return (
     <div className="relative w-full h-full">
 
