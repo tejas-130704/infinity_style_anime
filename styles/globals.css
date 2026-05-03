@@ -121,5 +121,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 }
+
+/* ── Custom breakpoints ─────────────────────────────────────── */
+@custom-variant xs (@media (width >= 475px));

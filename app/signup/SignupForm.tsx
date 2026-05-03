@@ -9,7 +9,7 @@ import { GlowButton } from '@/components/GlowButton'
 import { GoogleLogin } from '@/components/GoogleLogin'
 import { toast } from 'sonner'
 
-export function LoginForm() {
+export function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || '/account'
@@ -26,9 +26,9 @@ export function LoginForm() {
     const messages: Record<string, string> = {
       account_exists:    'An account already exists with this Google address. Please sign in instead.',
       account_not_found: 'No account found for this Google address. Please sign up first.',
-      auth:              'Authentication failed. Please try signing in again.',
+      auth:              'Authentication failed. Please try again.',
     }
-    const msg = messages[authError] ?? `Sign-in error: ${authError}`
+    const msg = messages[authError] ?? `Sign-up error: ${authError}`
     toast.error(msg, { duration: 6000 })
   }, [searchParams])
 
@@ -38,19 +38,19 @@ export function LoginForm() {
 
     setLoading(true)
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: err, data } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+      }
+    })
     setLoading(false)
 
     if (err) {
-      // Show detailed toast — keep inline hint for invalid login for desktop readability
-      if (err.message.toLowerCase().includes('invalid login') || err.message.toLowerCase().includes('invalid credentials')) {
-        toast.error('Invalid email or password.', {
-          description: 'Double-check your credentials. If you signed up with Google, use "Sign in with Google" below.',
-          duration: 7000,
-        })
-      } else if (err.message.toLowerCase().includes('email not confirmed')) {
-        toast.error('Email not verified.', {
-          description: 'Check your inbox for a verification email and confirm it before signing in.',
+      if (err.message.toLowerCase().includes('already registered')) {
+        toast.error('Account exists', {
+          description: 'An account with this email already exists. Please sign in.',
           duration: 7000,
         })
       } else {
@@ -59,24 +59,32 @@ export function LoginForm() {
       return
     }
 
-    toast.success('Signed in successfully!', { duration: 2500 })
-    router.push(next)
-    router.refresh()
+    if (data?.session) {
+      toast.success('Account created successfully!', { duration: 2500 })
+      router.push(next)
+      router.refresh()
+    } else {
+      toast.success('Check your email!', {
+        description: 'We sent you a confirmation link. Please confirm your email to sign in.',
+        duration: 8000,
+      })
+      router.push('/login')
+    }
   }
 
   return (
     <main className="min-h-screen bg-mugen-black pt-20 pb-16 sm:pt-28 sm:pb-20">
       <div className="container mx-auto max-w-md px-4 sm:px-6">
-        <h1 className="font-cinzel text-2xl font-bold text-white sm:text-3xl">Sign in</h1>
-        <p className="mt-1 text-sm text-white/50">Welcome back to Infinity Style Anime</p>
+        <h1 className="font-cinzel text-2xl font-bold text-white sm:text-3xl">Create Account</h1>
+        <p className="mt-1 text-sm text-white/50">Join Infinity Style Anime</p>
 
         <form onSubmit={onSubmit} className="mt-6 sm:mt-8 space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-white" htmlFor="login-email">
+            <label className="mb-1.5 block text-sm font-semibold text-white" htmlFor="signup-email">
               Email
             </label>
             <input
-              id="login-email"
+              id="signup-email"
               type="email"
               required
               autoComplete="email"
@@ -90,18 +98,19 @@ export function LoginForm() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-white" htmlFor="login-password">
+            <label className="mb-1.5 block text-sm font-semibold text-white" htmlFor="signup-password">
               Password
             </label>
             <div className="relative">
               <input
-                id="login-password"
+                id="signup-password"
                 type={showPassword ? 'text' : 'password'}
                 required
-                autoComplete="current-password"
+                minLength={6}
+                autoComplete="new-password"
                 className="w-full rounded-lg border border-mugen-gray bg-mugen-black/50 px-4 py-3 pr-12 text-base text-white
                            placeholder:text-white/30 focus:border-mugen-crimson focus:outline-none transition"
-                placeholder="••••••••"
+                placeholder="At least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -120,24 +129,24 @@ export function LoginForm() {
           <GlowButton type="submit" className="w-full py-3" disabled={loading}>
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Signing in…
+                <Loader2 className="h-4 w-4 animate-spin" /> Creating account…
               </span>
-            ) : 'Sign in'}
+            ) : 'Sign up'}
           </GlowButton>
         </form>
 
-        {/* Google Sign-in */}
+        {/* Google Sign-up */}
         <div className="mt-4">
-          <GoogleLogin mode="signin" />
+          <GoogleLogin mode="signup" />
         </div>
 
         <p className="mt-6 text-center text-sm text-white/60">
-          No account?{' '}
+          Already have an account?{' '}
           <Link
-            href={`/signup?next=${encodeURIComponent(next)}`}
+            href={`/login?next=${encodeURIComponent(next)}`}
             className="font-semibold text-mugen-gold hover:text-white transition"
           >
-            Create one
+            Sign in
           </Link>
         </p>
       </div>

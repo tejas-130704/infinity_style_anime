@@ -41,7 +41,7 @@ export function SimilarProducts({ productId, className = '' }: Props) {
   if (!loading && products.length === 0) return null
 
   return (
-    <section className={`mt-16 ${className}`}>
+    <section className={`mt-10 md:mt-16 ${className}`}>
       <div className="mb-6 flex items-center gap-3">
         <Flame className="h-5 w-5 text-mugen-crimson" />
         <h2 className="font-cinzel text-2xl font-bold text-white">You Might Also Like</h2>
@@ -52,7 +52,7 @@ export function SimilarProducts({ productId, className = '' }: Props) {
           <Loader2 className="h-8 w-8 animate-spin text-mugen-crimson/60" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {products.map((product) => (
             <SimilarProductCard key={product.id} product={product} />
           ))}

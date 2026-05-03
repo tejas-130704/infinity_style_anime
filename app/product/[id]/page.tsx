@@ -103,7 +103,7 @@ export default async function ProductPage({
         }
       `}</style>
 
-      <main className="min-h-screen bg-mugen-black pt-24 pb-20">
+      <main className="min-h-screen bg-mugen-black pt-20 md:pt-24 pb-20">
         {/* Ambient gradient blob */}
         <div
           aria-hidden
@@ -113,9 +113,9 @@ export default async function ProductPage({
           <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-mugen-crimson/6 blur-[100px]" />
         </div>
 
-        <div className="container mx-auto max-w-7xl px-4 md:px-8">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
           {/* ── Breadcrumb / back link ── */}
-          <nav className="mb-8 flex items-center gap-2 text-sm" aria-label="Breadcrumb">
+          <nav className="mb-5 md:mb-8 flex items-center gap-2 text-sm" aria-label="Breadcrumb">
             <Link
               href="/shop"
               className="group inline-flex items-center gap-1.5 font-sans font-medium text-white/45 transition hover:text-mugen-gold"
@@ -131,7 +131,7 @@ export default async function ProductPage({
               {String(product.category).replace(/_/g, ' ')}
             </Link>
             <span className="text-white/20">/</span>
-            <span className="max-w-[220px] truncate font-sans text-white/70" aria-current="page">
+            <span className="max-w-[140px] sm:max-w-[260px] truncate font-sans text-white/70" aria-current="page">
               {product.name}
             </span>
           </nav>
@@ -150,7 +150,7 @@ export default async function ProductPage({
           </div>
 
           {/* ── Divider ── */}
-          <hr className="my-16 border-none h-px bg-gradient-to-r from-transparent via-mugen-magenta/20 to-transparent" />
+          <hr className="my-8 md:my-16 border-none h-px bg-gradient-to-r from-transparent via-mugen-magenta/20 to-transparent" />
 
           {/* ── Similar Products ── */}
           <SimilarProducts productId={productId} />

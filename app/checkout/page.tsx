@@ -15,6 +15,7 @@ import { Loader2, ShoppingBag, MapPin, Gift } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { shouldOptimizeImageSrc } from '@/lib/image-allowlist';
+import { toast } from 'sonner';
 
 type CartItem = {
   id: string;
@@ -51,7 +52,6 @@ export default function CheckoutPageNew() {
   const { user: meUser, isLoading: meLoading } = useUserMe();
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loadingCart, setLoadingCart] = useState(true);
   const [buyNowProduct, setBuyNowProduct] = useState<{
@@ -266,17 +266,16 @@ export default function CheckoutPageNew() {
   // Submit checkout
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setSubmitting(true);
 
     try {
       // ── Guard: need items in either flow ──────────────────────────────────
       if (!isBuyNow && cartItems.length === 0) {
-        setError('Your cart is empty');
+        toast.error('Your cart is empty', { description: 'Add items before placing an order.' });
         return;
       }
       if (isBuyNow && !buyNowProduct) {
-        setError('Product data was lost — please go back and try Buy Now again.');
+        toast.error('Session expired', { description: 'Please go back and try Buy Now again.' });
         return;
       }
 
@@ -308,7 +307,10 @@ export default function CheckoutPageNew() {
       const orderData = await createOrderRes.json();
 
       if (!createOrderRes.ok) {
-        setError(orderData.error || 'Failed to create order');
+        toast.error(orderData.error || 'Failed to create order', {
+          description: 'Please check your details and try again.',
+          duration: 6000,
+        });
         return;
       }
 
@@ -361,19 +363,22 @@ export default function CheckoutPageNew() {
       if (!outcome.ok) {
         if (outcome.reason === 'failed') {
           await markOrderPaymentUnsuccessful(orderDbId, 'gateway_failed', outcome.message);
+          toast.error('Payment failed', { description: outcome.message, duration: 8000 });
         } else if (outcome.reason === 'dismissed') {
           await markOrderPaymentUnsuccessful(orderDbId, 'user_dismissed', outcome.message);
+          toast.info('Payment cancelled', { description: 'You can place the order again when ready.', duration: 5000 });
         } else if (outcome.reason === 'sdk') {
           await markOrderPaymentUnsuccessful(orderDbId, 'sdk_error', outcome.message);
+          toast.error('Payment gateway error', { description: outcome.message, duration: 8000 });
         }
-        setError(outcome.message);
         return;
       }
     } catch (error: any) {
-      setError(error.message || 'Payment failed');
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Checkout error:', error);
-      }
+      console.error('[checkout]', error);
+      toast.error(error.message || 'Payment failed', {
+        description: 'Please try again. If the issue persists, contact support.',
+        duration: 8000,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -381,8 +386,8 @@ export default function CheckoutPageNew() {
 
   if (meLoading || !ready || loadingCart) {
     return (
-      <main className="min-h-screen bg-mugen-black pt-28 pb-20">
-        <div className="container mx-auto px-4 text-white/70 flex items-center justify-center">
+      <main className="min-h-screen bg-mugen-black pt-20 md:pt-28 pb-20">
+        <div className="container mx-auto px-4 text-white/70 flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-2">Loading checkout...</span>
         </div>
@@ -393,7 +398,7 @@ export default function CheckoutPageNew() {
   // Buy Now: if product data was lost (e.g. page refresh), redirect gracefully
   if (isBuyNow && !buyNowProduct) {
     return (
-      <main className="min-h-screen bg-mugen-black pt-28 pb-20">
+      <main className="min-h-screen bg-mugen-black pt-20 md:pt-28 pb-16">
         <div className="container mx-auto max-w-md px-4 text-center">
           <ShoppingBag className="mx-auto h-16 w-16 text-white/40" />
           <h2 className="mt-4 text-2xl font-bold text-white">Session expired</h2>
@@ -411,7 +416,7 @@ export default function CheckoutPageNew() {
   // Empty cart (cart flow only)
   if (!isBuyNow && cartItems.length === 0) {
     return (
-      <main className="min-h-screen bg-mugen-black pt-28 pb-20">
+      <main className="min-h-screen bg-mugen-black pt-20 md:pt-28 pb-16">
         <div className="container mx-auto max-w-md px-4 text-center">
           <ShoppingBag className="mx-auto h-16 w-16 text-white/40" />
           <h2 className="mt-4 text-2xl font-bold text-white">Your cart is empty</h2>
@@ -425,19 +430,19 @@ export default function CheckoutPageNew() {
   }
 
   return (
-    <main className="min-h-screen bg-mugen-black pt-28 pb-20">
-      <div className="container mx-auto max-w-6xl px-4 md:px-8">
-        <h1 className="font-cinzel text-4xl font-bold text-white">Checkout</h1>
-        <p className="mt-2 text-white/60">Secure payment via Razorpay</p>
+    <main className="min-h-screen bg-mugen-black pt-20 md:pt-28 pb-16 md:pb-20 overflow-x-hidden">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h1 className="font-cinzel text-xl sm:text-3xl md:text-4xl font-bold text-white">Checkout</h1>
+        <p className="mt-1 text-xs sm:text-sm text-white/60">Secure payment via Razorpay</p>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-3">
-          {/* Left Column - Forms */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="mt-5 md:mt-8 grid gap-4 md:gap-8 lg:grid-cols-3">
+          {/* Left Column - Forms (order-2 on mobile so summary shows first) */}
+          <div className="lg:col-span-2 space-y-4 order-2 lg:order-1 min-w-0">
             {/* Delivery Address */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-              <div className="flex items-center gap-2 mb-6">
-                <MapPin className="h-5 w-5 text-mugen-crimson" />
-                <h3 className="text-xl font-bold text-white">Delivery Address</h3>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6 backdrop-blur-md">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-mugen-crimson" />
+                <h3 className="text-lg sm:text-xl font-bold text-white">Delivery Address</h3>
               </div>
 
               <form onSubmit={onSubmit} className="space-y-4">
@@ -447,9 +452,10 @@ export default function CheckoutPageNew() {
                     <input
                       required
                       type="text"
+                      autoComplete="name"
                       value={form.name}
                       onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
+                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
                       placeholder="Enter your name"
                     />
                   </div>
@@ -459,9 +465,11 @@ export default function CheckoutPageNew() {
                     <input
                       required
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
                       value={form.email}
                       onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
+                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -473,9 +481,11 @@ export default function CheckoutPageNew() {
                     <input
                       required
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       value={form.phone1}
                       onChange={(e) => setForm((f) => ({ ...f, phone1: e.target.value }))}
-                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
+                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
                       placeholder="10-digit mobile number"
                     />
                   </div>
@@ -484,9 +494,10 @@ export default function CheckoutPageNew() {
                     <label className="mb-1 block text-sm font-semibold text-white">Alternate Phone</label>
                     <input
                       type="tel"
+                      inputMode="tel"
                       value={form.phone2}
                       onChange={(e) => setForm((f) => ({ ...f, phone2: e.target.value }))}
-                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
+                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
                       placeholder="Optional"
                     />
                   </div>
@@ -499,7 +510,7 @@ export default function CheckoutPageNew() {
                     value={form.address}
                     onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                     rows={3}
-                    className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none resize-none"
+                    className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none resize-none"
                     placeholder="House no., Building name, Street, Area"
                   />
                 </div>
@@ -510,9 +521,10 @@ export default function CheckoutPageNew() {
                     <input
                       required
                       type="text"
+                      autoComplete="address-level2"
                       value={form.city}
                       onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
+                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
                       placeholder="City"
                     />
                   </div>
@@ -522,20 +534,14 @@ export default function CheckoutPageNew() {
                     <input
                       required
                       type="text"
+                      autoComplete="address-level1"
                       value={form.state}
                       onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
+                      className="w-full rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none"
                       placeholder="State"
                     />
                   </div>
                 </div>
-
-                {/* Error Message */}
-                {error && (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                    {error}
-                  </div>
-                )}
               </form>
             </div>
 
@@ -551,11 +557,11 @@ export default function CheckoutPageNew() {
             <StudentVerification onRewardWon={handleRewardWon} contextId={isBuyNow && buyNowProduct ? buyNowProduct.id : cartItems.map(item => item.products?.id).sort().join('_')} />
           </div>
 
-          {/* Right Column - Order Summary */}
-          <div className="space-y-6">
+          {/* Right Column - Order Summary (order-1 on mobile so it appears first) */}
+          <div className="space-y-4 order-1 lg:order-2 min-w-0">
             {/* Cart Items */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-              <h3 className="mb-4 text-xl font-bold text-white">Order Summary</h3>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5 backdrop-blur-md">
+              <h3 className="mb-3 text-base sm:text-xl font-bold text-white">Order Summary</h3>
               <div className="space-y-4">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-3">
@@ -654,7 +660,7 @@ export default function CheckoutPageNew() {
               type="submit"
               onClick={onSubmit}
               disabled={submitting}
-              className="place-order-btn w-full rounded-lg px-6 py-4 font-bold shadow-lg shadow-mugen-crimson/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="place-order-btn w-full rounded-lg px-4 py-4 font-bold shadow-lg shadow-mugen-crimson/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {submitting ? (
                 <>
@@ -662,14 +668,13 @@ export default function CheckoutPageNew() {
                   <span>Processing...</span>
                 </>
               ) : (
-                <>
-                  <span>Place Order • {formatCurrency(priceBreakdown.total)}</span>
-                </>
+                <span>Place Order • {formatCurrency(priceBreakdown.total)}</span>
               )}
             </button>
 
-            <p className="text-center text-xs text-white/40">
-              By placing this order, you agree to our Terms & Conditions
+            <p className="text-center text-xs text-white/40 leading-relaxed break-words px-1">
+              By placing this order, you agree to our{' '}
+              <Link href="/legal/terms" className="underline hover:text-white/70 whitespace-nowrap">Terms &amp; Conditions</Link>
             </p>
           </div>
         </div>

@@ -198,13 +198,13 @@ export default function OrderDetailPage() {
             </div>
           )}
 
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-md min-w-0">
             <h2 className="mb-4 font-cinzel text-lg font-bold text-white">Items ({order.order_items.length})</h2>
             <div className="space-y-4">
               {order.order_items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3">
                   {item.products?.image_url ? (
-                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-white/10">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white/10">
                       <Image
                         src={item.products.image_url}
                         alt={item.products.name}
@@ -214,7 +214,7 @@ export default function OrderDetailPage() {
                       />
                     </div>
                   ) : (
-                    <div className="h-14 w-14 flex-shrink-0 rounded-lg bg-white/10" />
+                    <div className="h-14 w-14 shrink-0 rounded-lg bg-white/10" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">{item.products?.name ?? 'Product'}</p>
@@ -223,7 +223,7 @@ export default function OrderDetailPage() {
                     </p>
                     <p className="text-xs text-white/40">Qty: {item.quantity}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-white">{formatCurrency(item.price * item.quantity)}</p>
                     <p className="text-xs text-white/40">{formatCurrency(item.price)} each</p>
                   </div>
@@ -232,26 +232,26 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-md min-w-0">
             <h2 className="mb-4 font-cinzel text-lg font-bold text-white">Price Breakdown</h2>
             <div className="space-y-2.5 text-sm">
-              <div className="flex justify-between text-white/70">
-                <span>Original Subtotal</span>
-                <span>{formatCurrency(order.subtotal)}</span>
+              <div className="flex items-center justify-between gap-2 text-white/70">
+                <span className="truncate min-w-0">Original Subtotal</span>
+                <span className="whitespace-nowrap shrink-0">{formatCurrency(order.subtotal)}</span>
               </div>
               {order.discount_amount > 0 && (
-                <div className="flex justify-between text-emerald-400">
-                  <span>Coupon Discount</span>
-                  <span>−{formatCurrency(order.discount_amount)}</span>
+                <div className="flex items-center justify-between gap-2 text-emerald-400">
+                  <span className="truncate min-w-0">Coupon Discount</span>
+                  <span className="whitespace-nowrap shrink-0">−{formatCurrency(order.discount_amount)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-white/70">
-                <span>GST (18%)</span>
-                <span>{formatCurrency(order.gst_amount)}</span>
+              <div className="flex items-center justify-between gap-2 text-white/70">
+                <span className="truncate min-w-0">GST (18%)</span>
+                <span className="whitespace-nowrap shrink-0">{formatCurrency(order.gst_amount)}</span>
               </div>
-              <div className="flex justify-between text-white/70">
-                <span>Delivery</span>
-                <span>
+              <div className="flex items-center justify-between gap-2 text-white/70">
+                <span className="truncate min-w-0">Delivery</span>
+                <span className="whitespace-nowrap shrink-0">
                   {order.delivery_charge === 0 ? (
                     <span className="text-emerald-400">FREE</span>
                   ) : (
@@ -259,34 +259,34 @@ export default function OrderDetailPage() {
                   )}
                 </span>
               </div>
-              <div className="mt-2 flex justify-between border-t border-white/10 pt-3 text-base font-bold text-white">
-                <span>Total Paid</span>
-                <span className="text-mugen-gold">{formatCurrency(order.total_price)}</span>
+              <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/10 pt-3 text-base font-bold text-white">
+                <span className="truncate min-w-0">Total Paid</span>
+                <span className="whitespace-nowrap shrink-0 text-mugen-gold">{formatCurrency(order.total_price)}</span>
               </div>
             </div>
           </div>
 
           {order.addresses && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-md min-w-0 overflow-hidden">
               <h2 className="mb-4 font-cinzel text-lg font-bold text-white">Delivery Address</h2>
               <div className="space-y-2">
                 <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-mugen-crimson" />
-                  <div>
-                    <p className="font-semibold text-white">{order.addresses.name}</p>
-                    <p className="text-white/60">{order.addresses.address}</p>
-                    <p className="text-white/60">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-mugen-crimson" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-white truncate">{order.addresses.name}</p>
+                    <p className="text-white/60 line-clamp-2 break-words">{order.addresses.address}</p>
+                    <p className="text-white/60 truncate">
                       {order.addresses.city}, {order.addresses.state}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-white/50">
-                  <Phone className="h-4 w-4 flex-shrink-0 text-white/30" />
-                  <span>{order.addresses.phone1}</span>
+                  <Phone className="h-4 w-4 shrink-0 text-white/30" />
+                  <span className="truncate">{order.addresses.phone1}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-white/50">
-                  <Mail className="h-4 w-4 flex-shrink-0 text-white/30" />
-                  <span>{order.addresses.email}</span>
+                  <Mail className="h-4 w-4 shrink-0 text-white/30" />
+                  <span className="truncate">{order.addresses.email}</span>
                 </div>
               </div>
             </div>

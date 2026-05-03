@@ -178,13 +178,13 @@ export default function CheckoutSuccessClient() {
               </a>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-md">
               <h2 className="mb-4 font-cinzel text-lg font-bold text-white">Order Items</h2>
               <div className="space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center gap-3">
                     {item.products?.image_url ? (
-                      <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-white/10">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white/10">
                         <Image
                           src={item.products.image_url}
                           alt={item.products.name}
@@ -194,28 +194,28 @@ export default function CheckoutSuccessClient() {
                         />
                       </div>
                     ) : (
-                      <div className="h-14 w-14 flex-shrink-0 rounded-lg bg-white/10" />
+                      <div className="h-14 w-14 shrink-0 rounded-lg bg-white/10" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">{item.products?.name ?? 'Product'}</p>
                       <p className="text-xs text-white/50">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-bold text-white">{formatCurrency(item.price * item.quantity)}</p>
+                    <p className="shrink-0 text-sm font-bold text-white">{formatCurrency(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-md">
               <h2 className="mb-4 font-cinzel text-lg font-bold text-white">Price Breakdown</h2>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-white/70">
-                  <span>Item Total</span>
-                  <span>{formatCurrency(order.subtotal)}</span>
+                <div className="flex items-center justify-between gap-2 text-white/70">
+                  <span className="truncate min-w-0">Item Total</span>
+                  <span className="whitespace-nowrap shrink-0">{formatCurrency(order.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-white/70">
-                  <span>Delivery</span>
-                  <span>
+                <div className="flex items-center justify-between gap-2 text-white/70">
+                  <span className="truncate min-w-0">Delivery</span>
+                  <span className="whitespace-nowrap shrink-0">
                     {order.delivery_charge === 0 ? (
                       <span className="text-emerald-400">FREE</span>
                     ) : (
@@ -223,28 +223,28 @@ export default function CheckoutSuccessClient() {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between border-t border-white/5 pt-2 text-xs text-white/50">
-                  <span>Subtotal (items + delivery)</span>
-                  <span>{formatCurrency(order.subtotal + order.delivery_charge)}</span>
+                <div className="flex items-center justify-between gap-2 border-t border-white/5 pt-2 text-xs text-white/50">
+                  <span className="truncate min-w-0">Subtotal (items + delivery)</span>
+                  <span className="whitespace-nowrap shrink-0">{formatCurrency(order.subtotal + order.delivery_charge)}</span>
                 </div>
                 {order.discount_amount > 0 && (
-                  <div className="flex justify-between text-emerald-400">
-                    <span>Coupon discount</span>
-                    <span>−{formatCurrency(order.discount_amount)}</span>
+                  <div className="flex items-center justify-between gap-2 text-emerald-400">
+                    <span className="truncate min-w-0">Coupon discount</span>
+                    <span className="whitespace-nowrap shrink-0">−{formatCurrency(order.discount_amount)}</span>
                   </div>
                 )}
                 {order.gst_amount > 0 && (
-                  <div className="flex justify-between text-white/70">
-                    <span>GST</span>
-                    <span>{formatCurrency(order.gst_amount)}</span>
+                  <div className="flex items-center justify-between gap-2 text-white/70">
+                    <span className="truncate min-w-0">GST</span>
+                    <span className="whitespace-nowrap shrink-0">{formatCurrency(order.gst_amount)}</span>
                   </div>
                 )}
-                <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-base font-bold text-white">
-                  <span>Total Paid</span>
-                  <span className="text-mugen-gold">{formatCurrency(order.total_price)}</span>
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3 text-base font-bold text-white">
+                  <span className="truncate min-w-0">Total Paid</span>
+                  <span className="whitespace-nowrap shrink-0 text-mugen-gold">{formatCurrency(order.total_price)}</span>
                 </div>
                 {order.discount_amount > 0 && (
-                  <p className="pt-2 text-center text-xs font-medium text-emerald-400/90">
+                  <p className="pt-2 text-center text-xs font-medium text-emerald-400/90 break-words">
                     You saved {formatCurrency(order.discount_amount)} on this order
                   </p>
                 )}
@@ -252,14 +252,14 @@ export default function CheckoutSuccessClient() {
             </div>
 
             {order.addresses && (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-md min-w-0 overflow-hidden">
                 <h2 className="mb-3 font-cinzel text-lg font-bold text-white">Delivering To</h2>
-                <p className="text-sm font-semibold text-white">{order.addresses.name}</p>
-                <p className="mt-1 text-sm text-white/60">{order.addresses.address}</p>
-                <p className="text-sm text-white/60">
+                <p className="text-sm font-semibold text-white truncate">{order.addresses.name}</p>
+                <p className="mt-1 text-sm text-white/60 line-clamp-2">{order.addresses.address}</p>
+                <p className="text-sm text-white/60 truncate">
                   {order.addresses.city}, {order.addresses.state}
                 </p>
-                <p className="text-sm text-white/50">{order.addresses.phone1}</p>
+                <p className="text-sm text-white/50 truncate">{order.addresses.phone1}</p>
               </div>
             )}
           </div>

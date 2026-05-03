@@ -274,7 +274,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
         .btn-buy-now:focus-visible { color: #22201f; border-color: transparent; }
       `}</style>
 
-      <div className="grid gap-8 lg:gap-12 lg:grid-cols-[1fr_1fr] xl:grid-cols-[500px_1fr]">
+      <div className="grid gap-8 md:gap-10 lg:gap-12 md:grid-cols-2 xl:grid-cols-[500px_1fr]">
 
         {/* ╔════════════════════════════════╗
             ║  LEFT — Gallery + 3D Viewer   ║
@@ -329,7 +329,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
           </div>
 
           {/* Product title */}
-          <h1 className="font-cinzel text-2xl font-bold leading-snug text-white md:text-[1.75rem]">
+          <h1 className="font-cinzel text-xl font-bold leading-snug text-white sm:text-2xl md:text-[1.75rem]">
             {product.name}
           </h1>
 
@@ -346,17 +346,17 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
               <>
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
                   <span
-                    className="font-sans text-lg sm:text-xl text-white/40 line-through decoration-white/30 tabular-nums"
+                    className="font-sans text-base sm:text-lg text-white/40 line-through decoration-white/30 tabular-nums"
                     title="Maximum retail price"
                   >
                     {fmt(displayOriginal ?? mrpPaisa!)}
                   </span>
-                  <span className="font-cinzel text-3xl sm:text-4xl font-bold tracking-tight text-white tabular-nums">
+                  <span className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white tabular-nums">
                     {fmt(displayPrice)}
                   </span>
                   <span
-                    className="inline-flex items-center rounded-md bg-emerald-600/95 px-2.5 py-1
-                               font-sans text-xs font-extrabold uppercase tracking-wide text-white shadow-md"
+                    className="inline-flex items-center rounded-md bg-emerald-600/95 px-2 py-0.5 sm:px-2.5 sm:py-1
+                               font-sans text-[11px] sm:text-xs font-extrabold uppercase tracking-wide text-white shadow-md"
                   >
                     {pct}% off
                   </span>
@@ -373,7 +373,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
               </>
             ) : (
               <>
-                <span className="font-cinzel text-3xl sm:text-4xl font-bold text-mugen-gold tracking-tight tabular-nums">
+                <span className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-mugen-gold tracking-tight tabular-nums">
                   {fmt(displayPrice)}
                 </span>
                 <p className="font-sans text-[11px] text-white/28">Inclusive of all taxes</p>
@@ -468,7 +468,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
                 Size:{' '}
                 <span className="font-bold text-white">{selectedSize || 'Not selected'}</span>
               </p>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {availableSizes.map((s) => {
                   const meta = SIZE_META[s]
                   const isActive = selectedSize === s
@@ -543,7 +543,7 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
           <Divider />
 
           {/* ── Trust badges ── */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2">
             {[
               { Icon: Truck,       text: 'Free shipping ₹999+', sub: 'Pan India delivery' },
               { Icon: ShieldCheck, text: 'Secure payment',       sub: 'SSL encrypted' },
@@ -551,11 +551,11 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
             ].map(({ Icon, text, sub }) => (
               <div
                 key={text}
-                className="flex flex-col gap-1 rounded-xl border border-white/8 bg-white/3 px-3.5 py-3"
+                className="flex flex-col gap-1 rounded-xl border border-white/8 bg-white/3 px-2.5 py-2.5 sm:px-3.5 sm:py-3"
               >
-                <Icon className="h-4 w-4 text-mugen-gold/70" />
-                <span className="font-sans text-xs font-semibold text-white/65">{text}</span>
-                <span className="font-sans text-[10px] text-white/30">{sub}</span>
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-mugen-gold/70" />
+                <span className="font-sans text-[10px] sm:text-xs font-semibold text-white/65 leading-tight">{text}</span>
+                <span className="hidden sm:block font-sans text-[10px] text-white/30">{sub}</span>
               </div>
             ))}
           </div>
@@ -577,9 +577,9 @@ export function ProductDetailClient({ product }: { product: ProductFull }) {
               <button
                 id="btn-buy-now"
                 aria-label="Buy now — go directly to checkout"
-                className="btn-buy-now flex h-12 w-full items-center justify-center gap-2.5
+                className="btn-buy-now flex h-12 w-full items-center justify-center gap-2
                            overflow-hidden rounded-xl border border-mugen-gold/60
-                           font-cinzel text-sm font-bold uppercase tracking-widest text-mugen-gold
+                           font-cinzel text-xs sm:text-sm font-bold uppercase tracking-widest text-mugen-gold
                            transition-colors duration-300 select-none
                            hover:shadow-[0_0_28px_rgba(255,211,77,0.35)]
                            active:scale-[0.99] focus-visible:outline-none

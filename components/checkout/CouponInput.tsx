@@ -64,7 +64,7 @@ export function CouponInput({
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6 backdrop-blur-md">
       <div className="flex items-center gap-2 mb-4">
         <Tag className="h-5 w-5 text-mugen-gold" />
         <h3 className="text-lg font-bold text-white">Apply Coupon</h3>
@@ -95,7 +95,7 @@ export function CouponInput({
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex flex-col xs:flex-row gap-2">
         <input
           type="text"
           value={code}
@@ -104,13 +104,13 @@ export function CouponInput({
           placeholder={normalizedApplied ? 'Enter a different code to replace' : 'Enter coupon code'}
           disabled={disabled || loading}
           autoComplete="off"
-          className="flex-1 rounded-lg border border-white/20 bg-mugen-black/50 px-4 py-2.5 text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none disabled:opacity-50"
+          className="flex-1 w-full rounded-lg border border-white/20 bg-mugen-black/50 px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-mugen-crimson focus:outline-none disabled:opacity-50"
         />
         <button
           type="button"
           onClick={handleApply}
           disabled={disabled || loading || !code.trim()}
-          className="rounded-lg bg-mugen-crimson px-6 py-2.5 font-semibold text-white transition-all hover:bg-mugen-crimson/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="w-full xs:w-auto rounded-lg bg-mugen-crimson px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-mugen-crimson/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0"
         >
           {loading ? (
             <>

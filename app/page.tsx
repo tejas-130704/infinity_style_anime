@@ -1,13 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
 import { HeroSection } from '@/components/HeroSection'
-
-const LoadingAnimation = dynamic(
-  () => import('@/components/LoadingAnimation').then((m) => ({ default: m.LoadingAnimation })),
-  { ssr: false, loading: () => <div className="min-h-screen bg-black" aria-hidden /> },
-)
 
 const ProductShowcase = dynamic(
   () => import('@/components/ProductShowcase').then((m) => ({ default: m.ProductShowcase })),
@@ -31,27 +25,8 @@ const FeaturedCollections = dynamic(
 )
 
 export default function Home() {
-  const [loadingAnimationShown, setLoadingAnimationShown] = useState(false)
-
-  useEffect(() => {
-    const hasSeenLoadingAnimation = sessionStorage.getItem('mugenDripLoadingShown')
-    if (hasSeenLoadingAnimation) {
-      setLoadingAnimationShown(true)
-    }
-  }, [])
-
-  const handleLoadingComplete = () => {
-    sessionStorage.setItem('mugenDripLoadingShown', 'true')
-    setLoadingAnimationShown(true)
-  }
-
   return (
     <main className="bg-black text-mugen-white">
-      <LoadingAnimation
-        onComplete={handleLoadingComplete}
-        isSkipped={loadingAnimationShown}
-      />
-
       <div className="relative">
         <HeroSection />
         <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />

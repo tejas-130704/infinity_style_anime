@@ -83,7 +83,7 @@ export function buildOrderInvoiceHtml(payload: OrderInvoicePayload, opts?: { ass
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${font('background:#f3f4f6;padding:32px 16px;')}">
     <tr>
       <td align="center">
-        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="${font('max-width:640px;width:100%;border-radius:8px;border:1px solid #e5e7eb;background:#ffffff;overflow:hidden;border-collapse:collapse;')}">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="${font('width:640px;min-width:640px;border-radius:8px;border:1px solid #e5e7eb;background:#ffffff;overflow:hidden;border-collapse:collapse;')}">
           <tr>
             <td style="padding:28px 28px 22px;border-bottom:1px solid #e5e7eb;">
               <table width="100%" cellspacing="0" cellpadding="0" style="${font('border-collapse:collapse;')}">
@@ -389,7 +389,7 @@ export function buildAdminInvoiceHtml(
     `<body$1>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f23;padding:24px 16px 0;">
     <tr><td align="center">
-      <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="max-width:640px;width:100%;">
+      <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="width:640px;min-width:640px;">
         <tr><td>${adminBanner}</td></tr>
       </table>
     </td></tr>

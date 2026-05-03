@@ -159,7 +159,7 @@ export function ImageGallery({
 
         {/* Main image frame */}
         <div
-          className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/8
+          className="relative aspect-[4/3] sm:aspect-square w-full overflow-hidden rounded-2xl border border-white/8
                      bg-gradient-to-b from-mugen-dark/80 to-mugen-black group cursor-zoom-in select-none"
           onClick={() => setZoomed(v => !v)}
         >
@@ -200,7 +200,7 @@ export function ImageGallery({
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-9 w-9
                            items-center justify-center rounded-full border border-white/10
                            bg-mugen-black/70 text-white/50 backdrop-blur-sm
-                           opacity-0 group-hover:opacity-100 transition-all
+                           opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all
                            hover:border-mugen-magenta/50 hover:text-white hover:scale-110"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -214,7 +214,7 @@ export function ImageGallery({
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-9 w-9
                            items-center justify-center rounded-full border border-white/10
                            bg-mugen-black/70 text-white/50 backdrop-blur-sm
-                           opacity-0 group-hover:opacity-100 transition-all
+                           opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all
                            hover:border-mugen-magenta/50 hover:text-white hover:scale-110"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
