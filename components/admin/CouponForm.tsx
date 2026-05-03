@@ -33,6 +33,7 @@ export type CouponFormInitial = {
   max_uses: number | null
   max_uses_per_user: number
   is_active: boolean
+  is_visible: boolean
   first_order_only: boolean
   apply_to_all: boolean
   product_ids: string[]
@@ -81,6 +82,7 @@ export function CouponForm({ mode, initial }: Props) {
     () => new Set(initial?.product_ids ?? [])
   )
   const [isActive, setIsActive] = useState(initial?.is_active !== false)
+  const [isVisible, setIsVisible] = useState(initial?.is_visible !== false)
   const [firstOrderOnly, setFirstOrderOnly] = useState(Boolean(initial?.first_order_only))
 
   useEffect(() => {
@@ -143,6 +145,7 @@ export function CouponForm({ mode, initial }: Props) {
       apply_to_all: applyAll,
       product_ids: applyAll ? [] : Array.from(selectedProducts),
       is_active: isActive,
+      is_visible: isVisible,
       first_order_only: firstOrderOnly,
     }
   }
@@ -328,6 +331,15 @@ export function CouponForm({ mode, initial }: Props) {
               className="rounded border-white/30"
             />
             Active
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-white/90">
+            <input
+              type="checkbox"
+              checked={isVisible}
+              onChange={(e) => setIsVisible(e.target.checked)}
+              className="rounded border-white/30"
+            />
+            Visible on frontend
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-white/90">
             <input

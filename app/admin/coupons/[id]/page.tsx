@@ -58,6 +58,7 @@ export default async function AdminCouponDetailPage({ params }: { params: Promis
     max_uses: coupon.max_uses,
     max_uses_per_user: coupon.max_uses_per_user ?? 1,
     is_active: coupon.is_active,
+    is_visible: coupon.is_visible !== false,
     first_order_only: Boolean(coupon.first_order_only),
     apply_to_all: coupon.apply_to_all !== false,
     product_ids,

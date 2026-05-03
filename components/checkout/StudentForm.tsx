@@ -226,7 +226,7 @@ export function StudentForm({ onVerified, onFailed }: StudentFormProps) {
 
       {loading && (
         <p className="text-center text-xs text-white/40 animate-pulse">
-          Running OCR + AI verification — this may take 10–20 seconds…
+          This may take 10–20 seconds…
         </p>
       )}
     </form>

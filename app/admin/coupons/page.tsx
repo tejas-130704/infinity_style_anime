@@ -72,6 +72,14 @@ export default async function AdminCouponsPage() {
                     >
                       {c.is_active ? 'Active' : 'Inactive'}
                     </span>
+                    <span className="mx-2 text-white/30">|</span>
+                    <span
+                      className={
+                        c.is_visible !== false ? 'text-blue-400' : 'text-white/40'
+                      }
+                    >
+                      {c.is_visible !== false ? 'Visible' : 'Hidden'}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-white/70">
                     {c.times_used ?? 0}

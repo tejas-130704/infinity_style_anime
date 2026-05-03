@@ -151,6 +151,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     max_uses,
     max_uses_per_user,
     is_active: body.is_active !== false,
+    is_visible: body.is_visible !== false,
     first_order_only: Boolean(body.first_order_only),
     apply_to_all,
   }

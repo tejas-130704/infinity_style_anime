@@ -6,29 +6,20 @@ import Groq from 'groq-sdk'
 // We use dynamic import for tesseract.js to avoid SSR issues
 // tesseract.js works in Node.js environment (Next.js API routes)
 
-const GROQ_PROMPT = `You are validating whether a given OCR text belongs to a student ID card.
+const GROQ_PROMPT = `You are validating whether a given image is a student ID card.
 
 Rules:
-- Just check if the uploaded OCR is an ID or not. No need to strictly validate it.
-- If it is an ID, there will be something like enrollment no., roll no., student name, college or school name, etc.
+- Just check if the uploaded image is a student ID or not. No need to strictly validate it.
+- If it is an ID, there will be something like enrollment no., roll no., student name, college or school name, etc. visible.
 - If something like this is available, then allow it.
-- Other random info or no info will be considered as invalid ID.
+- Other random photos, selfies, gym cards, etc. will be considered as invalid ID.
 
-Examples:
-Valid: "ABC University Student Name: Rahul ID: 123"
-Valid: "XYZ Institute of Tech Student ID: 456"
-Invalid: "Gym membership card"
-Invalid: "Restaurant receipt"
-Invalid: "Just a random photo"
+Respond ONLY with a valid JSON object. Do not include any explanations, markdown formatting, or other text.
 
-Now analyze the given OCR text and respond ONLY in JSON with no explanation:
-
+Valid Output:
 {"verified": true}
 or
-{"verified": false}
-
-OCR TEXT:
-{{extractedText}}`
+{"verified": false}`
 
 export async function POST(request: Request) {
   // ── Auth check ─────────────────────────────────────────────────────────────
@@ -132,50 +123,34 @@ export async function POST(request: Request) {
     console.warn('[student/verify] Storage upload failed (non-fatal):', e)
   }
 
-  // ── OCR with Tesseract.js ─────────────────────────────────────────────────
-  let extractedText = ''
-  try {
-    const { createWorker } = await import('tesseract.js')
-    const worker = await createWorker('eng')
-    const {
-      data: { text },
-    } = await worker.recognize(imageBuffer)
-    await worker.terminate()
-    extractedText = text.trim()
-  } catch (ocrErr) {
-    console.error('[student/verify] OCR failed:', ocrErr)
-    return NextResponse.json(
-      { error: 'Could not read the ID image. Please upload a clearer photo.' },
-      { status: 422 }
-    )
-  }
-
-  if (!extractedText || extractedText.length < 10) {
-    return NextResponse.json(
-      { error: 'No readable text found in the image. Upload a clearer college ID photo.' },
-      { status: 422 }
-    )
-  }
+  // ── Prepare Image for Groq Vision ─────────────────────────────────────────
+  const base64Image = imageBuffer.toString('base64')
+  const mimeType = idImageFile.type || 'image/jpeg'
+  const dataUri = `data:${mimeType};base64,${base64Image}`
 
   // ── GROQ verification ─────────────────────────────────────────────────────
   let groqVerified = false
   try {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [
         {
           role: 'user',
-          content: GROQ_PROMPT.replace('{{extractedText}}', extractedText),
+          content: [
+            { type: 'text', text: GROQ_PROMPT },
+            { type: 'image_url', image_url: { url: dataUri } },
+          ],
         },
       ],
       temperature: 0,
       max_tokens: 50,
-      response_format: { type: 'json_object' },
+      // response_format might not be supported by vision models, we parse JSON manually
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
-    const parsed = JSON.parse(raw)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw)
     groqVerified = parsed.verified === true
   } catch (groqErr) {
     console.error('[student/verify] GROQ failed:', groqErr)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tag, Loader2 } from 'lucide-react';
 
 interface CouponInputProps {
@@ -9,6 +9,14 @@ interface CouponInputProps {
   /** When set, only one coupon is active; applying another code replaces it (see helper text). */
   appliedCode?: string | null;
   onRemoveCoupon?: () => void;
+}
+
+interface Coupon {
+  code: string;
+  description: string | null;
+  discount_type: string;
+  discount_value: number;
+  min_order_amount: number;
 }
 
 export function CouponInput({
@@ -20,6 +28,20 @@ export function CouponInput({
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/coupons')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.coupons) {
+          setAvailableCoupons(data.coupons);
+        }
+      })
+      .catch((err) => console.error('Failed to load coupons', err))
+      .finally(() => setLoadingCoupons(false));
+  }, []);
 
   const normalizedApplied = appliedCode?.trim().toUpperCase() ?? '';
 
@@ -140,22 +162,39 @@ export function CouponInput({
       <div className="mt-4 space-y-2">
         <p className="text-xs font-semibold text-white/60 uppercase">Available Coupons:</p>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setCode('HALF50')}
-            disabled={disabled}
-            className="rounded-full border border-mugen-gold/30 bg-mugen-gold/5 px-3 py-1 text-xs font-medium text-mugen-gold transition-all hover:bg-mugen-gold/10 disabled:opacity-50"
-          >
-            HALF50 - 50% off on orders ₹500+
-          </button>
-          <button
-            type="button"
-            onClick={() => setCode('FREEDEL')}
-            disabled={disabled}
-            className="rounded-full border border-mugen-gold/30 bg-mugen-gold/5 px-3 py-1 text-xs font-medium text-mugen-gold transition-all hover:bg-mugen-gold/10 disabled:opacity-50"
-          >
-            FREEDEL - Free delivery on 1st order
-          </button>
+          {loadingCoupons ? (
+            <p className="text-xs text-white/40 animate-pulse">Loading coupons...</p>
+          ) : availableCoupons.length > 0 ? (
+            availableCoupons.map((coupon) => {
+              const amountOff =
+                coupon.discount_type === 'percentage'
+                  ? `${coupon.discount_value}% off`
+                  : coupon.discount_type === 'fixed'
+                  ? `₹${coupon.discount_value / 100} off`
+                  : 'Free delivery';
+
+              const minText =
+                coupon.min_order_amount > 0
+                  ? ` on orders ₹${Math.round(coupon.min_order_amount / 100)}+`
+                  : '';
+
+              const displayLabel = coupon.description || `${coupon.code} - ${amountOff}${minText}`;
+
+              return (
+                <button
+                  key={coupon.code}
+                  type="button"
+                  onClick={() => setCode(coupon.code)}
+                  disabled={disabled}
+                  className="rounded-full border border-mugen-gold/30 bg-mugen-gold/5 px-3 py-1 text-xs font-medium text-mugen-gold transition-all hover:bg-mugen-gold/10 disabled:opacity-50"
+                >
+                  {displayLabel}
+                </button>
+              );
+            })
+          ) : (
+            <p className="text-xs text-white/40">No coupons available right now.</p>
+          )}
         </div>
       </div>
     </div>
